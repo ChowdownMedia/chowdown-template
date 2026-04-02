@@ -294,10 +294,17 @@ def mark_pending_content(html):
         lambda m: m.group(0),  # Keep SEO slots for seo.py
         html
     )
-    # Mark other empty slots
+    # Mark other empty slots (but preserve schema_blocks and build-time slots for later scripts)
+    preserve = {'schema_blocks', 'font_face_css', 'icons_css', 'font_preload_tags', 'critical_css'}
+    def mark_pending(m):
+        slot_name = m.group(1)
+        if slot_name in preserve:
+            return m.group(0)  # Keep for later pipeline steps
+        return f'<!-- CONTENT PENDING: {slot_name} -->'
+
     html = re.sub(
         r'\{\{\s*(?!seo\.)([a-zA-Z0-9_.]+)\s*\}\}',
-        r'<!-- CONTENT PENDING: \1 -->',
+        mark_pending,
         html
     )
     return html
