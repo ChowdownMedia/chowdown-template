@@ -84,7 +84,9 @@ def scaffold(config_path, pages_path):
     write_robots_txt(output_dir, config)
 
     # 10. Copy config into output for renderer/schema/seo to read
-    shutil.copy2(config_path, output_dir / 'config.json')
+    config_dest = output_dir / 'config.json'
+    if Path(config_path).resolve() != config_dest.resolve():
+        shutil.copy2(config_path, config_dest)
 
     print(f'\n=== Scaffold complete: {len(approved_pages)} pages ===\n')
     return output_dir

@@ -153,9 +153,27 @@ def derive_page_name(page_path):
 
 
 def fill_seo_slot(html, slot_name, value):
-    """Replace {{ slot_name }} with value in HTML."""
+    """Replace SEO values in HTML — handles both template tags and rendered-empty tags."""
     escaped = escape_html_attr(value)
-    return html.replace(f'{{{{ {slot_name} }}}}', escaped)
+
+    # Try template tag first
+    html = html.replace(f'{{{{ {slot_name} }}}}', escaped)
+
+    # Also replace already-rendered empty tags by matching the HTML element directly
+    if slot_name == 'seo.title':
+        html = re.sub(r'<title>[^<]*</title>', f'<title>{escaped}</title>', html)
+    elif slot_name == 'seo.description':
+        html = re.sub(r'(<meta\s+name="description"\s+content=")[^"]*(")', rf'\g<1>{escaped}\2', html)
+    elif slot_name == 'seo.og_title':
+        html = re.sub(r'(<meta\s+property="og:title"\s+content=")[^"]*(")', rf'\g<1>{escaped}\2', html)
+    elif slot_name == 'seo.og_description':
+        html = re.sub(r'(<meta\s+property="og:description"\s+content=")[^"]*(")', rf'\g<1>{escaped}\2', html)
+    elif slot_name == 'seo.twitter_title':
+        html = re.sub(r'(<meta\s+name="twitter:title"\s+content=")[^"]*(")', rf'\g<1>{escaped}\2', html)
+    elif slot_name == 'seo.twitter_description':
+        html = re.sub(r'(<meta\s+name="twitter:description"\s+content=")[^"]*(")', rf'\g<1>{escaped}\2', html)
+
+    return html
 
 
 def escape_html_attr(text):

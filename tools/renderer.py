@@ -2,7 +2,7 @@
 """
 Chowdown Renderer — Module 5
 Fills template slots from content-brief.json and asset-manifest.json.
-Processes {% include %}, {% for %}, {% if %} directives.
+Processes {% include %}, {% for %}, {% if %}, {% elif %}, {% else %}, {% endif %}.
 
 Usage:
     python3 tools/renderer.py --dir output/CLIENT/
@@ -15,6 +15,7 @@ import argparse
 import json
 import os
 import re
+from datetime import datetime
 from pathlib import Path
 
 # Simple vs complex section threshold (defined in code, not interpretation)
@@ -28,8 +29,8 @@ KNOWN_CLIENT_SLUGS = [
     'westfield-collective',
 ]
 
-# Global constant
 REVIEWS_WORKER_URL = 'https://reviews.chowdown.workers.dev/api/reviews'
+TEMPLATE_DIR = Path(__file__).parent.parent / 'template'
 
 
 def load_json(path):
@@ -51,60 +52,64 @@ def render(output_dir):
 
     print(f'\n=== Rendering: {config["client"]["name"]} ===')
 
-    # Find all index.html files
-    html_files = list(output_dir.rglob('index.html'))
+    # Build the global context available to all pages
+    ctx = build_context(config, output_dir)
+
+    html_files = sorted(output_dir.rglob('index.html'))
     print(f'Found {len(html_files)} pages to render\n')
 
     contamination_warnings = []
 
     for html_path in html_files:
-        page_path = '/' + str(html_path.parent.relative_to(output_dir)) + '/'
-        if page_path == '/./' or page_path == '//':
-            page_path = '/'
+        page_path = '/' + str(html_path.parent.relative_to(output_dir)).replace('.', '') + '/'
+        page_path = re.sub(r'/+', '/', page_path)
 
         print(f'Rendering: {page_path}')
 
         with open(html_path, 'r', encoding='utf-8') as f:
             html = f.read()
 
-        # Get page content from brief
         page_brief = brief.get('pages', {}).get(page_path, {})
 
-        # Process includes
-        html = process_includes(html, output_dir)
+        # Build page-level context
+        page_ctx = dict(ctx)
+        page_ctx['page'] = {
+            'path': page_path,
+            'title': page_brief.get('title', derive_page_name(page_path)),
+            'breadcrumbs': build_breadcrumbs(page_path),
+            'hero_image': config.get('hero', {}).get('image_url', ''),
+        }
+        page_ctx['page_sections'] = []
 
-        # Process conditionals
-        html = process_conditionals(html, config, page_brief)
+        # Pass 1: Process includes (3 passes for nesting)
+        for _ in range(3):
+            prev = html
+            html = process_includes(html)
+            if html == prev:
+                break
 
-        # Process loops
-        html = process_loops(html, config, page_brief)
+        # Pass 2-6: Process control structures and slots (multiple passes)
+        for _ in range(8):
+            prev = html
+            html = process_conditionals(html, page_ctx)
+            html = process_for_loops(html, page_ctx)
+            html = fill_slots(html, page_ctx)
+            if html == prev:
+                break
 
-        # Fill config slots
-        html = fill_config_slots(html, config)
-
-        # Fill page-specific slots
-        html = fill_page_slots(html, page_brief, page_path, config)
-
-        # Fill asset paths from manifest (character for character)
+        # Pass 7: Fill asset paths from manifest
         html = fill_asset_paths(html, manifest)
 
-        # Insert content-pending markers
-        html = mark_pending_content(html)
+        # Pass 8: Clean up any remaining template tags
+        html = cleanup_remaining_tags(html)
 
-        # Check for external link contamination
+        # Check contamination
         warnings = check_contamination(html, page_path)
-        if warnings:
-            contamination_warnings.extend(warnings)
-            for w in warnings:
-                html = html.replace(
-                    w['url'],
-                    f'{w["url"]}<!-- WARNING: possible contamination — contains "{w["slug"]}" -->'
-                )
+        contamination_warnings.extend(warnings)
 
         with open(html_path, 'w', encoding='utf-8') as f:
             f.write(html)
 
-    # Report contamination
     if contamination_warnings:
         print(f'\n!!! CONTAMINATION WARNINGS ({len(contamination_warnings)}) !!!')
         for w in contamination_warnings:
@@ -115,252 +120,271 @@ def render(output_dir):
     print(f'\n=== Render complete: {len(html_files)} pages ===\n')
 
 
-def process_includes(html, output_dir):
-    """Process {% include "path" %} directives — inline component HTML."""
-    template_dir = Path(__file__).parent.parent / 'template'
+def build_context(config, output_dir):
+    """Build the global template context from config and generated assets."""
+    brand = config.get('brand', {})
 
-    def replace_include(match):
-        path = match.group(1)
-        include_path = template_dir / path
-        if include_path.exists():
-            with open(include_path, 'r', encoding='utf-8') as f:
+    # Generate font-face CSS
+    font_face_css = generate_font_face_css(config)
+
+    # Read icons.css for inlining
+    icons_path = TEMPLATE_DIR / 'assets' / 'css' / 'icons.css'
+    icons_css = ''
+    if icons_path.exists():
+        with open(icons_path, 'r') as f:
+            icons_css = f.read()
+
+    # Font preload tags
+    font_preload_tags = generate_font_preloads(config)
+
+    # Critical CSS (inline above-fold styles)
+    critical_css = generate_critical_css(config)
+
+    return {
+        'config': config,
+        'build_year': str(datetime.now().year),
+        'font_face_css': font_face_css,
+        'icons_css': icons_css,
+        'font_preload_tags': font_preload_tags,
+        'critical_css': critical_css,
+        'REVIEWS_WORKER_URL': REVIEWS_WORKER_URL,
+        'seo': {
+            'title': '',
+            'description': '',
+            'og_title': '',
+            'og_description': '',
+            'twitter_title': '',
+            'twitter_description': '',
+        },
+    }
+
+
+def process_includes(html):
+    """Replace {% include "path" %} with file contents."""
+    def replace_include(m):
+        path = m.group(1)
+        fpath = TEMPLATE_DIR / path
+        if fpath.exists():
+            with open(fpath, 'r') as f:
                 return f.read()
         return f'<!-- INCLUDE NOT FOUND: {path} -->'
 
-    pattern = re.compile(r'\{%\s*include\s+"([^"]+)"\s*%\}')
-    # Run multiple passes for nested includes
-    for _ in range(3):
-        new_html = pattern.sub(replace_include, html)
-        if new_html == html:
-            break
-        html = new_html
-    return html
+    return re.sub(r'\{%\s*include\s+"([^"]+)"\s*%\}', replace_include, html)
 
 
-def process_conditionals(html, config, page_brief):
-    """Process {% if expr %} ... {% else %} ... {% endif %} blocks."""
-    # Simple single-level conditionals
+def process_conditionals(html, ctx):
+    """Process {% if %}...{% elif %}...{% else %}...{% endif %} blocks."""
+    # Match the outermost if/endif pairs
     pattern = re.compile(
-        r'\{%\s*if\s+(.+?)\s*%\}(.*?)(?:\{%\s*else\s*%\}(.*?))?\{%\s*endif\s*%\}',
+        r'\{%\s*if\s+(.+?)\s*%\}'
+        r'(.*?)'
+        r'\{%\s*endif\s*%\}',
         re.DOTALL
     )
 
-    def eval_condition(expr):
-        expr = expr.strip()
+    def replace_block(m):
+        full_expr = m.group(1)
+        body = m.group(2)
 
-        # Handle == comparison
-        if '==' in expr:
-            left, right = expr.split('==', 1)
-            left_val = resolve_path(left.strip(), config, page_brief)
-            right_val = right.strip().strip('"').strip("'")
-            return str(left_val) == right_val
+        # Split body into if/elif/else branches
+        branches = []
+        # First branch: the if condition
+        parts = re.split(r'\{%\s*elif\s+(.+?)\s*%\}|\{%\s*else\s*%\}', body)
 
-        # Handle 'or' operator
-        if ' or ' in expr:
-            parts = expr.split(' or ')
-            return any(resolve_path(p.strip(), config, page_brief) for p in parts)
+        # parts[0] is the if-body
+        # Then alternating: elif-condition, elif-body, ..., else-body (if present)
+        conditions = [full_expr]
+        bodies = [parts[0]]
 
-        # Handle 'not' operator
-        if expr.startswith('not '):
-            val = resolve_path(expr[4:].strip(), config, page_brief)
-            return not val
+        i = 1
+        while i < len(parts):
+            if parts[i] is not None:
+                # This is an elif condition
+                conditions.append(parts[i])
+                bodies.append(parts[i + 1] if i + 1 < len(parts) else '')
+                i += 2
+            else:
+                # This is the else (condition is None)
+                bodies.append(parts[i + 1] if i + 1 < len(parts) else '')
+                conditions.append(None)  # else has no condition
+                i += 2
 
-        # Simple truthy check
-        val = resolve_path(expr, config, page_brief)
-        return bool(val)
+        # Evaluate branches in order
+        for j, cond in enumerate(conditions):
+            if cond is None:
+                # else branch — always true if reached
+                return bodies[j] if j < len(bodies) else ''
+            if eval_expr(cond, ctx):
+                return bodies[j] if j < len(bodies) else ''
 
-    def replace_conditional(match):
-        expr = match.group(1)
-        if_block = match.group(2)
-        else_block = match.group(3) or ''
-        if eval_condition(expr):
-            return if_block
-        return else_block
+        return ''  # No branch matched, no else
 
-    # Multiple passes for nested conditionals
-    for _ in range(5):
-        new_html = pattern.sub(replace_conditional, html)
-        if new_html == html:
-            break
-        html = new_html
-    return html
+    return pattern.sub(replace_block, html)
 
 
-def process_loops(html, config, page_brief):
+def process_for_loops(html, ctx):
     """Process {% for item in collection %} ... {% endfor %} blocks."""
     pattern = re.compile(
         r'\{%\s*for\s+(\w+)\s+in\s+(.+?)\s*%\}(.*?)\{%\s*endfor\s*%\}',
         re.DOTALL
     )
 
-    def replace_loop(match):
-        var_name = match.group(1)
-        collection_path = match.group(2).strip()
-        body = match.group(3)
+    def replace_loop(m):
+        var_name = m.group(1)
+        collection_path = m.group(2).strip()
+        body = m.group(3)
 
-        items = resolve_path(collection_path, config, page_brief)
+        items = resolve(collection_path, ctx)
         if not items or not isinstance(items, list):
             return ''
 
         parts = []
         for idx, item in enumerate(items):
             rendered = body
-            # Replace loop variables
-            rendered = rendered.replace('{{ loop.first }}', str(idx == 0))
+
+            # Loop metadata
+            is_first = (idx == 0)
+
+            # Handle {% if loop.first %} ... {% endif %}
+            rendered = re.sub(
+                r'\{%\s*if\s+loop\.first\s*%\}(.*?)\{%\s*endif\s*%\}',
+                lambda mm: mm.group(1) if is_first else '',
+                rendered, flags=re.DOTALL
+            )
+
             rendered = rendered.replace('{{ loop.index0 }}', str(idx))
             rendered = rendered.replace('{{ loop.index }}', str(idx + 1))
 
-            # Replace {{ var_name.field }} references
+            # Replace item fields
             if isinstance(item, dict):
-                for key, val in item.items():
-                    rendered = rendered.replace(f'{{{{ {var_name}.{key} }}}}', str(val) if val else '')
+                for key, val in flatten_dict(item, var_name):
+                    rendered = rendered.replace(f'{{{{ {key} }}}}', str(val) if val is not None else '')
             elif isinstance(item, str):
                 rendered = rendered.replace(f'{{{{ {var_name} }}}}', item)
 
-            # Handle loop.first for class toggling
-            if idx == 0:
-                rendered = re.sub(
-                    r'\{%\s*if\s+loop\.first\s*%\}(.*?)\{%\s*endif\s*%\}',
-                    r'\1', rendered, flags=re.DOTALL
-                )
-            else:
-                rendered = re.sub(
-                    r'\{%\s*if\s+loop\.first\s*%\}(.*?)\{%\s*endif\s*%\}',
-                    '', rendered, flags=re.DOTALL
-                )
+            # Handle range() in nested loops (for star ratings)
+            rendered = re.sub(
+                r'\{%\s*for\s+\w+\s+in\s+range\((\w+\.\w+)\)\s*%\}(.*?)\{%\s*endfor\s*%\}',
+                lambda mm: handle_range_loop(mm, item, var_name),
+                rendered, flags=re.DOTALL
+            )
 
             parts.append(rendered)
 
         return ''.join(parts)
 
-    # Multiple passes for nested loops
-    for _ in range(3):
-        new_html = pattern.sub(replace_loop, html)
-        if new_html == html:
-            break
-        html = new_html
-    return html
+    return pattern.sub(replace_loop, html)
 
 
-def fill_config_slots(html, config):
-    """Replace {{ config.path.to.value }} with actual values."""
-    pattern = re.compile(r'\{\{\s*config\.([a-zA-Z0-9_.]+)\s*\}\}')
+def handle_range_loop(m, item, parent_var):
+    """Handle {% for i in range(review.rating) %} style loops."""
+    field_path = m.group(1)
+    body = m.group(2)
+    field = field_path.split('.')[-1]
+    count = 0
+    if isinstance(item, dict):
+        count = int(item.get(field, 0) or 0)
+    return body * count
 
-    def replace_slot(match):
-        path = match.group(1)
-        val = resolve_nested(config, path)
+
+def fill_slots(html, ctx):
+    """Replace {{ path.to.value }} with resolved values."""
+    def replace_slot(m):
+        path = m.group(1).strip()
+        val = resolve(path, ctx)
         if val is None:
-            return ''
+            return m.group(0)  # Keep unresolved for later passes
         if isinstance(val, (list, dict)):
-            return json.dumps(val)
+            return json.dumps(val, ensure_ascii=False)
         return str(val)
 
-    return pattern.sub(replace_slot, html)
-
-
-def fill_page_slots(html, page_brief, page_path, config):
-    """Fill page-specific template variables."""
-    # {{ page.title }}, {{ page.path }}, etc.
-    html = html.replace('{{ page.title }}', page_brief.get('title', ''))
-    html = html.replace('{{ page.path }}', page_path)
-
-    # {{ build_year }}
-    from datetime import datetime
-    html = html.replace('{{ build_year }}', str(datetime.now().year))
-
-    # {{ seo.* }} placeholders — seo.py fills these later
-    # Leave them for now unless already set in brief
-    return html
+    return re.sub(r'\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}', replace_slot, html)
 
 
 def fill_asset_paths(html, manifest):
-    """Replace asset references using manifest — character for character copy."""
-    for asset_key, asset_info in manifest.items():
-        if isinstance(asset_info, dict):
-            local_path = asset_info.get('local_path', '')
-            if local_path:
-                # Replace any reference to this asset's original URL with local path
-                original_url = asset_info.get('original_url', '')
-                if original_url and original_url in html:
-                    html = html.replace(original_url, local_path)
+    """Replace asset references using manifest — character for character."""
+    for key, info in manifest.items():
+        if isinstance(info, dict):
+            orig = info.get('original_url', '')
+            local = info.get('local_path', '')
+            if orig and local and orig in html:
+                html = html.replace(orig, local)
     return html
 
 
-def mark_pending_content(html):
-    """Mark empty content slots and placeholder images."""
-    # Find remaining unfilled {{ }} slots
-    html = re.sub(
-        r'\{\{\s*(?:seo\.[a-zA-Z_]+)\s*\}\}',
-        lambda m: m.group(0),  # Keep SEO slots for seo.py
-        html
-    )
-    # Mark other empty slots (but preserve schema_blocks and build-time slots for later scripts)
-    preserve = {'schema_blocks', 'font_face_css', 'icons_css', 'font_preload_tags', 'critical_css'}
-    def mark_pending(m):
-        slot_name = m.group(1)
-        if slot_name in preserve:
-            return m.group(0)  # Keep for later pipeline steps
-        return f'<!-- CONTENT PENDING: {slot_name} -->'
+def cleanup_remaining_tags(html):
+    """Remove any remaining template tags that couldn't be resolved."""
+    # Remove empty {% if %}{% endif %} blocks
+    html = re.sub(r'\{%\s*if\s+[^%]*%\}\s*\{%\s*endif\s*%\}', '', html)
 
-    html = re.sub(
-        r'\{\{\s*(?!seo\.)([a-zA-Z0-9_.]+)\s*\}\}',
-        mark_pending,
-        html
-    )
+    # Remove remaining {% %} control tags
+    html = re.sub(r'\{%[^%]*%\}', '', html)
+
+    # Replace remaining {{ }} value tags with empty string
+    # But preserve HTML comments and <!-- SLOT: --> markers
+    html = re.sub(r'\{\{\s*[a-zA-Z0-9_.]+\s*\}\}', '', html)
+
+    # Clean up excessive blank lines
+    html = re.sub(r'\n{3,}', '\n\n', html)
+
     return html
 
 
-def check_contamination(html, page_path):
-    """Flag any URL containing known client slugs."""
-    warnings = []
-    url_pattern = re.compile(r'https?://[^\s"\'<>]+')
-    urls = url_pattern.findall(html)
+def eval_expr(expr, ctx):
+    """Evaluate a template expression to a boolean."""
+    expr = expr.strip()
 
-    for url in urls:
-        for slug in KNOWN_CLIENT_SLUGS:
-            if slug in url.lower():
-                warnings.append({
-                    'page': page_path,
-                    'url': url,
-                    'slug': slug,
-                })
-    return warnings
+    # Handle == comparison
+    if '==' in expr:
+        left, right = expr.split('==', 1)
+        left_val = str(resolve(left.strip(), ctx) or '')
+        right_val = right.strip().strip('"').strip("'")
+        return left_val == right_val
 
+    # Handle 'or'
+    if ' or ' in expr:
+        return any(eval_expr(p.strip(), ctx) for p in expr.split(' or '))
 
-def classify_section(section_data):
-    """
-    Classify a content section as simple or complex.
-    Simple: max 3 CSS properties, no grid, no carousel, no multi-column.
-    Complex: everything else — flagged for human review.
+    # Handle 'and'
+    if ' and ' in expr:
+        return all(eval_expr(p.strip(), ctx) for p in expr.split(' and '))
 
-    Returns: 'simple' or 'complex'
-    """
-    css_props = section_data.get('css_properties', [])
-    css_text = ' '.join(str(p).lower() for p in css_props)
+    # Handle 'not'
+    if expr.startswith('not '):
+        return not eval_expr(expr[4:], ctx)
 
-    # Check for complex indicators
-    for indicator in COMPLEX_CSS_INDICATORS:
-        if indicator in css_text:
-            return 'complex'
-
-    # Check property count
-    if len(css_props) > MAX_SIMPLE_CSS_PROPS:
-        return 'complex'
-
-    return 'simple'
+    # Simple truthy check
+    val = resolve(expr, ctx)
+    if isinstance(val, list):
+        return len(val) > 0
+    if isinstance(val, dict):
+        return len(val) > 0
+    return bool(val)
 
 
-def resolve_path(expr, config, page_brief):
-    """Resolve a dotted path like config.features.gallery to a value."""
-    if expr.startswith('config.'):
-        return resolve_nested(config, expr[7:])
-    if expr.startswith('page.'):
-        return resolve_nested(page_brief, expr[5:])
-    return resolve_nested(config, expr) or resolve_nested(page_brief, expr)
+def resolve(path, ctx):
+    """Resolve a dotted path against the context. Tries multiple prefixes."""
+    # Direct lookup
+    val = resolve_nested(ctx, path)
+    if val is not None:
+        return val
+
+    # Try with config. prefix stripped if present
+    if path.startswith('config.'):
+        return resolve_nested(ctx.get('config', {}), path[7:])
+
+    # Try as config path
+    val = resolve_nested(ctx.get('config', {}), path)
+    if val is not None:
+        return val
+
+    return None
 
 
 def resolve_nested(obj, dotted_path):
-    """Resolve a.b.c path on a nested dict."""
+    """Resolve a.b.c on a nested dict."""
+    if not obj or not dotted_path:
+        return None
     keys = dotted_path.split('.')
     current = obj
     for key in keys:
@@ -369,6 +393,127 @@ def resolve_nested(obj, dotted_path):
         else:
             return None
     return current
+
+
+def flatten_dict(d, prefix):
+    """Yield (dotted_key, value) pairs for template substitution."""
+    for key, val in d.items():
+        full_key = f'{prefix}.{key}'
+        if isinstance(val, dict):
+            yield from flatten_dict(val, full_key)
+        elif isinstance(val, list):
+            yield (full_key, json.dumps(val, ensure_ascii=False))
+        else:
+            yield (full_key, val)
+
+
+def build_breadcrumbs(page_path):
+    """Build breadcrumb array from path."""
+    if page_path == '/':
+        return []
+    parts = [p for p in page_path.strip('/').split('/') if p]
+    crumbs = []
+    for i, part in enumerate(parts):
+        is_last = (i == len(parts) - 1)
+        crumbs.append({
+            'label': part.replace('-', ' ').title(),
+            'url': None if is_last else '/' + '/'.join(parts[:i + 1]) + '/',
+        })
+    return crumbs
+
+
+def derive_page_name(page_path):
+    if page_path == '/':
+        return 'Home'
+    parts = page_path.strip('/').split('/')
+    return parts[-1].replace('-', ' ').title()
+
+
+def check_contamination(html, page_path):
+    """Flag any URL containing known client slugs."""
+    warnings = []
+    urls = re.findall(r'https?://[^\s"\'<>]+', html)
+    for url in urls:
+        for slug in KNOWN_CLIENT_SLUGS:
+            if slug in url.lower():
+                warnings.append({'page': page_path, 'url': url, 'slug': slug})
+    return warnings
+
+
+def generate_font_face_css(config):
+    """Generate @font-face declarations."""
+    brand = config.get('brand', {})
+    fonts = []
+    heading = brand.get('heading_font', 'Libre Baskerville')
+    body = brand.get('body_font', 'Lato')
+    script = brand.get('script_font', '')
+
+    slug_h = font_slug(heading)
+    fonts.append(ff(heading, '400', f'/assets/fonts/{slug_h}-regular.woff2'))
+    fonts.append(ff(heading, '700', f'/assets/fonts/{slug_h}-bold.woff2'))
+
+    slug_b = font_slug(body)
+    fonts.append(ff(body, '300', f'/assets/fonts/{slug_b}-light.woff2'))
+    fonts.append(ff(body, '400', f'/assets/fonts/{slug_b}-regular.woff2'))
+    fonts.append(ff(body, '700', f'/assets/fonts/{slug_b}-bold.woff2'))
+
+    if script:
+        slug_s = font_slug(script)
+        fonts.append(ff(script, '400', f'/assets/fonts/{slug_s}-regular.woff2'))
+
+    return '\n'.join(fonts)
+
+
+def ff(family, weight, src):
+    return (f"@font-face {{ font-family: '{family}'; font-style: normal; "
+            f"font-weight: {weight}; font-display: swap; "
+            f"src: url('{src}') format('woff2'); }}")
+
+
+def font_slug(name):
+    return re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')
+
+
+def generate_font_preloads(config):
+    brand = config.get('brand', {})
+    tags = []
+    for font in [brand.get('heading_font', ''), brand.get('body_font', '')]:
+        if font:
+            slug = font_slug(font)
+            tags.append(f'<link rel="preload" as="font" type="font/woff2" href="/assets/fonts/{slug}-regular.woff2" crossorigin>')
+    script = brand.get('script_font', '')
+    if script:
+        slug = font_slug(script)
+        tags.append(f'<link rel="preload" as="font" type="font/woff2" href="/assets/fonts/{slug}-regular.woff2" crossorigin>')
+    return '\n  '.join(tags)
+
+
+def generate_critical_css(config):
+    """Generate minimal critical above-fold CSS."""
+    brand = config.get('brand', {})
+    primary = brand.get('primary_color', '#8B1A1A')
+    bg = brand.get('background_color', '#1a1a1a')
+    text = brand.get('text_color', '#f5f5f5')
+    heading = brand.get('heading_font', 'Libre Baskerville')
+    body_font = brand.get('body_font', 'Lato')
+
+    return (
+        f"*,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}"
+        f"body{{font-family:'{body_font}',system-ui,sans-serif;color:{text};background:{bg};overflow-x:hidden}}"
+        f".site-header{{position:fixed;top:0;left:0;width:100%;z-index:1000;transition:background .3s}}"
+        f".site-header.scrolled{{background:rgba(0,0,0,.95);box-shadow:0 2px 10px rgba(0,0,0,.3)}}"
+        f".navbar{{width:100%;padding:10px 0}}"
+        f".nav-container{{display:flex;align-items:center;justify-content:center;width:90%;max-width:1280px;margin:0 auto;position:relative}}"
+        f".nav-logo img{{height:100px;width:auto}}"
+        f".nav-left,.nav-right{{display:flex;list-style:none;gap:20px;align-items:center}}"
+        f".nav-left a,.nav-right a{{font-family:'{heading}',serif;text-transform:uppercase;color:#fff;text-decoration:none;font-size:clamp(.875rem,.875rem + ((1vw - .2rem)*.542),1.2rem)}}"
+        f".hero{{position:relative;width:100%;height:85vh;min-height:500px;overflow:hidden}}"
+        f".hero-image,.hero-video{{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}}"
+        f".hero-overlay{{position:absolute;inset:0;background:rgba(0,0,0,.5)}}"
+        f".container{{width:90%;max-width:1280px;margin:0 auto}}"
+        f".btn{{display:inline-block;font-family:'{heading}',serif;text-transform:uppercase;font-weight:700;"
+        f"background:{primary};color:#fff;border:2px solid {primary};padding:10px 30px;border-radius:10px;text-decoration:none}}"
+    )
 
 
 if __name__ == '__main__':
