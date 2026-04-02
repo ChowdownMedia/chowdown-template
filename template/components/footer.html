@@ -1,0 +1,106 @@
+<!-- ========== FOOTER — Config-driven, rendered by scaffold.py ==========
+     All values injected from config.json. No hardcoded content.
+     Hours rendered from config.hours.groups array — supports any number of groups.
+     Social links only render when configured — no empty anchors.
+     Contact icons use .icon classes from icons.css.
+     Copyright year set by scaffold.py at build time via {{ build_year }}.
+     ========================================================================== -->
+
+<!-- ========== CONTACT SECTION (Location / Hours / Social / Contact) ========== -->
+<section class="section-contact">
+  <div class="container">
+    <div class="contact-grid">
+
+      <!-- Location -->
+      <div class="contact-col">
+        <h2>Location</h2>
+        <address>
+          <p><i class="icon icon-map-marker" aria-hidden="true"></i> {{ config.contact.address }}</p>
+          <p>{{ config.contact.city }}, {{ config.contact.state }}</p>
+          <p>{{ config.contact.zip }}</p>
+        </address>
+      </div>
+
+      <!-- Hours — renders all groups from config.hours.groups -->
+      <div class="contact-col">
+        <h2>Hours</h2>
+        {% for group in config.hours.groups %}
+        <h3>{{ group.label }}</h3>
+        {% for slot in group.schedule %}
+        <p>{{ slot.days }} {{ slot.open_display }} &ndash; {{ slot.close_display }}</p>
+        {% endfor %}
+        {% endfor %}
+      </div>
+
+      <!-- Social + Contact -->
+      <div class="contact-col">
+        <h2>Find Us On...</h2>
+        <div class="contact-social">
+          {% if config.social.facebook %}
+          <a href="{{ config.social.facebook }}" target="_blank" rel="noopener noreferrer nofollow" aria-label="Facebook"><i class="icon icon-facebook" aria-hidden="true"></i></a>
+          {% endif %}
+          {% if config.social.instagram %}
+          <a href="{{ config.social.instagram }}" target="_blank" rel="noopener noreferrer nofollow" aria-label="Instagram"><i class="icon icon-instagram" aria-hidden="true"></i></a>
+          {% endif %}
+          {% if config.social.tiktok %}
+          <a href="{{ config.social.tiktok }}" target="_blank" rel="noopener noreferrer nofollow" aria-label="TikTok"><i class="icon icon-tiktok" aria-hidden="true"></i></a>
+          {% endif %}
+          {% if config.social.twitter %}
+          <a href="{{ config.social.twitter }}" target="_blank" rel="noopener noreferrer nofollow" aria-label="X/Twitter"><i class="icon icon-twitter-x" aria-hidden="true"></i></a>
+          {% endif %}
+          {% if config.social.google %}
+          <a href="{{ config.social.google }}" target="_blank" rel="noopener noreferrer nofollow" aria-label="Google Reviews"><i class="icon icon-google" aria-hidden="true"></i></a>
+          {% endif %}
+          {% if config.social.yelp %}
+          <a href="{{ config.social.yelp }}" target="_blank" rel="noopener noreferrer nofollow" aria-label="Yelp"><i class="icon icon-yelp" aria-hidden="true"></i></a>
+          {% endif %}
+          {% if config.social.tripadvisor %}
+          <a href="{{ config.social.tripadvisor }}" target="_blank" rel="noopener noreferrer nofollow" aria-label="TripAdvisor"><i class="icon icon-tripadvisor" aria-hidden="true"></i></a>
+          {% endif %}
+        </div>
+
+        <h2 class="mt">Contact Us</h2>
+        {% if config.contact.phone %}
+        <p><a href="tel:{{ config.contact.phone }}"><i class="icon icon-phone" aria-hidden="true"></i> {{ config.contact.phone_display }}</a></p>
+        {% endif %}
+        {% if config.contact.email %}
+        <p><a href="mailto:{{ config.contact.email }}"><i class="icon icon-envelope" aria-hidden="true"></i> {{ config.contact.email }}</a></p>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========== FOOTER BAR ========== -->
+<footer class="site-footer">
+  <p class="footer-copyright">&copy; {{ build_year }} {{ config.client.name }}. All Rights Reserved. Powered By <strong>Chowdown</strong>.</p>
+</footer>
+
+<!-- ========== FLOATING WIDGETS ========== -->
+<div class="floating-widgets">
+  {% if config.features.birthday_capture %}
+  <button type="button" class="bday-pill" id="bday-pill" aria-label="Birthday offer" data-modal="bday-modal">
+    <span class="bday-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#333">
+        <path d="M12 6c1.1 0 2-.9 2-2 0-.38-.1-.73-.29-1.03L12 0l-1.71 2.97c-.19.3-.29.65-.29 1.03 0 1.1.9 2 2 2zm4.6 9.99l-1.07-1.07-1.08 1.07c-1.3 1.3-3.58 1.31-4.89 0l-1.07-1.07-1.09 1.07C6.75 16.64 5.88 17 4.96 17c-.73 0-1.4-.23-1.96-.61V21c0 .55.45 1 1 1h16c.55 0 1-.45 1-1v-4.61c-.56.38-1.23.61-1.96.61-.92 0-1.79-.36-2.44-1.01zM18 9h-5V7h-2v2H6c-1.66 0-3 1.34-3 3v1.54c0 1.08.88 1.96 1.96 1.96.52 0 1.02-.2 1.38-.57l2.14-2.13 2.13 2.13c.74.74 2.03.74 2.77 0l2.14-2.13 2.13 2.13c.37.37.86.57 1.38.57 1.08 0 1.96-.88 1.96-1.96V12c.01-1.66-1.33-3-2.99-3z"/>
+      </svg>
+    </span>
+    <span class="bday-text"><strong>Bday coming up?</strong> We have a gift for you</span>
+  </button>
+  {% endif %}
+  <button class="fab-btn fab-contact" aria-label="Contact us" title="Contact us">
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+    </svg>
+  </button>
+</div>
+
+<!-- ========== MOBILE FOOTER BAR ========== -->
+{% if config.nav.mobile_footer %}
+<nav class="mobile-footer-bar" aria-label="mobile footer">
+  {% for item in config.nav.mobile_footer %}
+  <a href="{{ item.url }}"{% if item.external %} target="_blank" rel="noopener"{% endif %}>{{ item.label }}</a>
+  {% endfor %}
+</nav>
+{% endif %}

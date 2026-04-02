@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- SEO — populated by seo.py -->
+  <!-- SLOT: title -->
+  <title>{{ seo.title }}</title>
+  <!-- SLOT: meta_description -->
+  <meta name="description" content="{{ seo.description }}">
+  <!-- SLOT: canonical -->
+  <link rel="canonical" href="{{ config.client.domain }}{{ vendor.path }}">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="{{ seo.og_title }}">
+  <meta property="og:description" content="{{ seo.og_description }}">
+  <meta property="og:type" content="restaurant">
+  <meta property="og:url" content="{{ config.client.domain }}{{ vendor.path }}">
+  <meta property="og:image" content="{{ config.client.domain }}{{ config.brand.og_image }}">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ seo.twitter_title }}">
+  <meta name="twitter:description" content="{{ seo.twitter_description }}">
+  <meta name="twitter:image" content="{{ config.client.domain }}{{ config.brand.og_image }}">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ config.brand.favicon_32 }}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ config.brand.favicon_180 }}">
+
+  <!-- Font face declarations -->
+  <style>
+  {{ font_face_css }}
+  </style>
+
+  <!-- Font preloads -->
+  {{ font_preload_tags }}
+
+  <!-- Icons inlined -->
+  <style>
+  {{ icons_css }}
+  </style>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/sections.css">
+
+  <!-- Structured Data — Restaurant/BarOrPub + parentOrganization + BreadcrumbList -->
+  <!-- SLOT: schema_json_ld -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "{{ vendor.schema_type }}",
+    "name": "{{ vendor.name }}",
+    "description": "{{ vendor.description }}",
+    {% if vendor.cuisine %}
+    "servesCuisine": {{ vendor.cuisine_json }},
+    {% endif %}
+    "url": "{{ config.client.domain }}{{ vendor.path }}",
+    "telephone": "{{ config.contact.phone }}",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "{{ config.contact.address }}",
+      "addressLocality": "{{ config.contact.city }}",
+      "addressRegion": "{{ config.contact.state }}",
+      "postalCode": "{{ config.contact.zip }}",
+      "addressCountry": "{{ config.contact.country }}"
+    },
+    "priceRange": "{{ config.schema.price_range }}",
+    "parentOrganization": {
+      "@type": "Organization",
+      "name": "{{ config.client.name }}",
+      "url": "{{ config.client.domain }}"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ config.client.domain }}/" },
+      { "@type": "ListItem", "position": 2, "name": "{{ vendor.parent_label }}", "item": "{{ config.client.domain }}{{ vendor.parent_path }}" },
+      { "@type": "ListItem", "position": 3, "name": "{{ vendor.name }}" }
+    ]
+  }
+  </script>
+
+</head>
+<body>
+
+  <!-- SLOT: header -->
+  {% include "components/header.html" %}
+
+  <!-- Vendor hero -->
+  {% if vendor.cover_image %}
+  <section class="vendor-hero" style="background-image: url('{{ vendor.cover_image }}');">
+    <div class="vendor-hero-overlay"></div>
+    <h1 class="vendor-hero-title">{{ vendor.name }}</h1>
+  </section>
+  {% else %}
+  <section class="vendor-hero vendor-hero-flat">
+    <h1 class="vendor-hero-title">{{ vendor.name }}</h1>
+  </section>
+  {% endif %}
+
+  <!-- Breadcrumbs -->
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <div class="container">
+      <a href="/">Home</a>
+      <span class="sep">/</span>
+      <a href="{{ vendor.parent_path }}">{{ vendor.parent_label }}</a>
+      <span class="sep">/</span>
+      <span>{{ vendor.name }}</span>
+    </div>
+  </nav>
+
+  <main>
+
+    <section class="vendor-content">
+      <div class="vendor-content-inner">
+
+        <!-- Vendor identity -->
+        <div class="vendor-intro">
+          {% if vendor.cuisine %}
+          <p class="vendor-cuisine">{{ vendor.cuisine_display }}</p>
+          {% endif %}
+
+          <!-- SLOT: vendor_description -->
+          {% for paragraph in vendor.body %}
+          <p>{{ paragraph }}</p>
+          {% endfor %}
+        </div>
+
+        <!-- Ordering CTA -->
+        {% if vendor.ordering_url %}
+        <div class="vendor-cta">
+          <a href="{{ vendor.ordering_url }}" class="btn" target="_blank" rel="noopener">Order from {{ vendor.name }}</a>
+        </div>
+        {% endif %}
+
+        <!-- Vendor gallery -->
+        {% if vendor.gallery %}
+        <div class="vendor-gallery">
+          {% for image in vendor.gallery %}
+          <img src="{{ image.src }}"
+               alt="{{ image.alt }}"
+               width="{{ image.width }}"
+               height="{{ image.height }}"
+               loading="lazy">
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Additional content sections from content-brief -->
+        <!-- SLOT: vendor_sections -->
+        {% for section in vendor_sections %}
+        {{ section.rendered_html }}
+        {% endfor %}
+
+      </div>
+    </section>
+
+    <!-- Footer -->
+    {% include "components/footer.html" %}
+
+  </main>
+
+  <script src="/assets/js/main.js" defer></script>
+</body>
+</html>

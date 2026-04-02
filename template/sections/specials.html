@@ -1,0 +1,62 @@
+<!-- ========== SPECIALS CAROUSEL — Config-driven, rendered by scaffold.py ==========
+     Slideshow of specials from config.specials array.
+     Each slide: image, headline, optional body text, optional CTA.
+     Carousel controls: icon-angle-left, icon-angle-right.
+     Auto-play toggle: icon-pause / icon-play.
+     Conditional on config.features.specials.
+     ========================================================================== -->
+
+{% if config.features.specials and config.specials %}
+<section class="section-specials">
+  <div class="container">
+
+    <h2 class="specials-heading">Specials</h2>
+
+    <div class="specials-carousel" id="specials-carousel">
+      {% for special in config.specials %}
+      <div class="specials-slide{% if loop.first %} active{% endif %}">
+        {% if special.image %}
+        <img src="{{ special.image.src }}"
+             alt="{{ special.image.alt }}"
+             width="{{ special.image.width }}"
+             height="{{ special.image.height }}"
+             loading="lazy">
+        {% endif %}
+        <div class="specials-content">
+          {% if special.headline %}
+          <h3>{{ special.headline }}</h3>
+          {% endif %}
+          {% if special.body %}
+          <p>{{ special.body }}</p>
+          {% endif %}
+          {% if special.cta %}
+          <a href="{{ special.cta.url }}" class="btn btn-sm"{% if special.cta.external %} target="_blank" rel="noopener"{% endif %}>{{ special.cta.label }}</a>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Carousel controls -->
+    <button class="specials-arrow specials-prev" id="specials-prev" aria-label="Previous special">
+      <i class="icon icon-angle-left" aria-hidden="true"></i>
+    </button>
+    <button class="specials-arrow specials-next" id="specials-next" aria-label="Next special">
+      <i class="icon icon-angle-right" aria-hidden="true"></i>
+    </button>
+
+    <!-- Dot indicators -->
+    <div class="specials-dots" id="specials-dots">
+      {% for special in config.specials %}
+      <button class="dot{% if loop.first %} active{% endif %}" data-index="{{ loop.index0 }}" aria-label="Special {{ loop.index }}"></button>
+      {% endfor %}
+    </div>
+
+    <!-- Auto-play toggle -->
+    <button class="specials-pause-btn" id="specials-pause" aria-label="Pause specials">
+      <i class="icon icon-pause" aria-hidden="true"></i>
+    </button>
+
+  </div>
+</section>
+{% endif %}

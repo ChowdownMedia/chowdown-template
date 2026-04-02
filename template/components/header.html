@@ -1,0 +1,198 @@
+<!-- ========== HEADER — Config-driven, rendered by scaffold.py ==========
+     All values injected from config.json. No hardcoded content.
+     Template variables use {{ config.path }} notation — scaffold.py replaces at build time.
+     Conditional blocks use {% if config.path %} / {% endif %} notation.
+
+     Layout variants controlled by config.brand.logo_position:
+       "center-nav"  — logo between nav-left and nav-right (Liberty/Westfield pattern)
+       "above"       — logo centered above nav bar, nav spans full width below (Marietta pattern)
+     ========================================================================== -->
+
+<header class="site-header" id="site-header">
+
+  {% if config.brand.logo_position == "above" %}
+  <!-- ===== Logo Above Layout ===== -->
+  <div class="nav-logo-above">
+    <a href="/" class="nav-logo">
+      <img src="{{ config.brand.logo }}"
+           alt="{{ config.client.name }}"
+           width="{{ config.brand.logo_width }}"
+           height="{{ config.brand.logo_height }}">
+    </a>
+  </div>
+  <nav class="navbar navbar-full">
+    <div class="nav-container">
+      <ul class="nav-left">
+        {% for item in config.nav.left %}
+        {% if item.dropdown %}
+        <li class="has-dropdown">
+          <a href="{{ item.url }}"{% if item.external %} target="_blank" rel="noopener"{% endif %}>{{ item.label }} <i class="icon icon-chevron-down" aria-hidden="true"></i></a>
+          <ul class="dropdown">
+            {% for sub in item.dropdown %}
+            <li><a href="{{ sub.url }}"{% if sub.external %} target="_blank" rel="noopener"{% endif %}>{{ sub.label }}</a></li>
+            {% endfor %}
+          </ul>
+        </li>
+        {% else %}
+        <li><a href="{{ item.url }}"{% if item.external %} target="_blank" rel="noopener"{% endif %}>{{ item.label }}</a></li>
+        {% endif %}
+        {% endfor %}
+      </ul>
+
+      <ul class="nav-right">
+        {% for item in config.nav.right %}
+        {% if item.dropdown %}
+        <li class="has-dropdown">
+          <a href="{{ item.url }}"{% if item.external %} target="_blank" rel="noopener"{% endif %}>{{ item.label }} <i class="icon icon-chevron-down" aria-hidden="true"></i></a>
+          <ul class="dropdown">
+            {% for sub in item.dropdown %}
+            <li><a href="{{ sub.url }}"{% if sub.external %} target="_blank" rel="noopener"{% endif %}>{{ sub.label }}</a></li>
+            {% endfor %}
+          </ul>
+        </li>
+        {% else %}
+        <li><a href="{{ item.url }}"{% if item.external %} target="_blank" rel="noopener"{% endif %}>{{ item.label }}</a></li>
+        {% endif %}
+        {% endfor %}
+      </ul>
+
+      {% if config.nav.cta_buttons %}
+      <div class="nav-cta">
+        {% for cta in config.nav.cta_buttons %}
+        <a href="{{ cta.url }}" class="btn btn-sm"{% if cta.external %} target="_blank" rel="noopener"{% endif %}>{{ cta.label }}</a>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <button class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  {% else %}
+  <!-- ===== Center-Nav Layout (default) ===== -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <ul class="nav-left">
+        {% for item in config.nav.left %}
+        {% if item.dropdown %}
+        <li class="has-dropdown">
+          <a href="{{ item.url }}"{% if item.external %} target="_blank" rel="noopener"{% endif %}>{{ item.label }} <i class="icon icon-chevron-down" aria-hidden="true"></i></a>
+          <ul class="dropdown">
+            {% for sub in item.dropdown %}
+            <li><a href="{{ sub.url }}"{% if sub.external %} target="_blank" rel="noopener"{% endif %}>{{ sub.label }}</a></li>
+            {% endfor %}
+          </ul>
+        </li>
+        {% else %}
+        <li><a href="{{ item.url }}"{% if item.external %} target="_blank" rel="noopener"{% endif %}>{{ item.label }}</a></li>
+        {% endif %}
+        {% endfor %}
+      </ul>
+
+      <a href="/" class="nav-logo">
+        <img src="{{ config.brand.logo }}"
+             alt="{{ config.client.name }}"
+             width="{{ config.brand.logo_width }}"
+             height="{{ config.brand.logo_height }}">
+      </a>
+
+      <ul class="nav-right">
+        {% for item in config.nav.right %}
+        {% if item.dropdown %}
+        <li class="has-dropdown">
+          <a href="{{ item.url }}"{% if item.external %} target="_blank" rel="noopener"{% endif %}>{{ item.label }} <i class="icon icon-chevron-down" aria-hidden="true"></i></a>
+          <ul class="dropdown">
+            {% for sub in item.dropdown %}
+            <li><a href="{{ sub.url }}"{% if sub.external %} target="_blank" rel="noopener"{% endif %}>{{ sub.label }}</a></li>
+            {% endfor %}
+          </ul>
+        </li>
+        {% else %}
+        <li><a href="{{ item.url }}"{% if item.external %} target="_blank" rel="noopener"{% endif %}>{{ item.label }}</a></li>
+        {% endif %}
+        {% endfor %}
+      </ul>
+
+      {% if config.nav.cta_buttons %}
+      <div class="nav-cta">
+        {% for cta in config.nav.cta_buttons %}
+        <a href="{{ cta.url }}" class="btn btn-sm"{% if cta.external %} target="_blank" rel="noopener"{% endif %}>{{ cta.label }}</a>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <button class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+  {% endif %}
+
+  <!-- Mobile Menu — mirrors desktop nav exactly, includes CTAs as links -->
+  <div class="mobile-menu" id="mobile-menu">
+    <ul>
+      {% for item in config.nav.left %}
+      {% if item.dropdown %}
+      <li class="mobile-dropdown">
+        <a href="#" class="mobile-dropdown-toggle">{{ item.label }}</a>
+        <ul class="mobile-sub">
+          {% for sub in item.dropdown %}
+          <li><a href="{{ sub.url }}"{% if sub.external %} target="_blank" rel="noopener"{% endif %}>{{ sub.label }}</a></li>
+          {% endfor %}
+        </ul>
+      </li>
+      {% else %}
+      <li><a href="{{ item.url }}"{% if item.external %} target="_blank" rel="noopener"{% endif %}>{{ item.label }}</a></li>
+      {% endif %}
+      {% endfor %}
+
+      {% for item in config.nav.right %}
+      {% if item.dropdown %}
+      <li class="mobile-dropdown">
+        <a href="#" class="mobile-dropdown-toggle">{{ item.label }}</a>
+        <ul class="mobile-sub">
+          {% for sub in item.dropdown %}
+          <li><a href="{{ sub.url }}"{% if sub.external %} target="_blank" rel="noopener"{% endif %}>{{ sub.label }}</a></li>
+          {% endfor %}
+        </ul>
+      </li>
+      {% else %}
+      <li><a href="{{ item.url }}"{% if item.external %} target="_blank" rel="noopener"{% endif %}>{{ item.label }}</a></li>
+      {% endif %}
+      {% endfor %}
+
+      {% if config.nav.cta_buttons %}
+      {% for cta in config.nav.cta_buttons %}
+      <li><a href="{{ cta.url }}" class="btn btn-sm"{% if cta.external %} target="_blank" rel="noopener"{% endif %}>{{ cta.label }}</a></li>
+      {% endfor %}
+      {% endif %}
+
+      <!-- Social links — only renders icons for configured platforms -->
+      <li class="mobile-social">
+        {% if config.social.facebook %}
+        <a href="{{ config.social.facebook }}" target="_blank" rel="noopener noreferrer nofollow" aria-label="Facebook"><i class="icon icon-facebook" aria-hidden="true"></i></a>
+        {% endif %}
+        {% if config.social.instagram %}
+        <a href="{{ config.social.instagram }}" target="_blank" rel="noopener noreferrer nofollow" aria-label="Instagram"><i class="icon icon-instagram" aria-hidden="true"></i></a>
+        {% endif %}
+        {% if config.social.tiktok %}
+        <a href="{{ config.social.tiktok }}" target="_blank" rel="noopener noreferrer nofollow" aria-label="TikTok"><i class="icon icon-tiktok" aria-hidden="true"></i></a>
+        {% endif %}
+        {% if config.social.twitter %}
+        <a href="{{ config.social.twitter }}" target="_blank" rel="noopener noreferrer nofollow" aria-label="X/Twitter"><i class="icon icon-twitter-x" aria-hidden="true"></i></a>
+        {% endif %}
+        {% if config.social.google %}
+        <a href="{{ config.social.google }}" target="_blank" rel="noopener noreferrer nofollow" aria-label="Google Reviews"><i class="icon icon-google" aria-hidden="true"></i></a>
+        {% endif %}
+        {% if config.social.yelp %}
+        <a href="{{ config.social.yelp }}" target="_blank" rel="noopener noreferrer nofollow" aria-label="Yelp"><i class="icon icon-yelp" aria-hidden="true"></i></a>
+        {% endif %}
+        {% if config.social.tripadvisor %}
+        <a href="{{ config.social.tripadvisor }}" target="_blank" rel="noopener noreferrer nofollow" aria-label="TripAdvisor"><i class="icon icon-tripadvisor" aria-hidden="true"></i></a>
+        {% endif %}
+      </li>
+    </ul>
+  </div>
+</header>

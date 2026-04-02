@@ -1,0 +1,55 @@
+<!-- ========== HERO VIDEO — Config-driven, rendered by scaffold.py ==========
+     Full-width video hero with autoplay muted loop.
+     Video source: config.hero.video_url (self-hosted, no external CDN)
+     Poster image: config.hero.poster_image (fetchpriority="high" — LCP candidate)
+     Overlay: semi-transparent dark overlay for text legibility
+     Headline/subheadline/CTA: optional slots, only render if configured
+
+     Performance:
+       - Poster image has fetchpriority="high" and rel="preload" in <head>
+       - Video has preload="none" — browser loads poster first, video streams after
+       - No autoplay on reduced-motion preference (handled by main.js)
+     ========================================================================== -->
+
+{% if config.features.hero_type == "video" %}
+<section class="hero">
+
+  <!-- Poster image — LCP element, loads immediately -->
+  {% if config.hero.poster_image %}
+  <img src="{{ config.hero.poster_image }}"
+       alt="{{ config.client.name }}"
+       class="hero-poster"
+       fetchpriority="high">
+  {% endif %}
+
+  <!-- Video — streams after page load, replaces poster -->
+  <video class="hero-video"
+         autoplay muted loop playsinline
+         preload="none"
+         {% if config.hero.poster_image %}poster="{{ config.hero.poster_image }}"{% endif %}>
+    <source src="{{ config.hero.video_url }}" type="video/mp4">
+  </video>
+
+  <!-- Overlay -->
+  <div class="hero-overlay"></div>
+
+  <!-- Content -->
+  <div class="hero-content">
+    {% if config.hero.headline %}
+    <h1 class="hero-title">{{ config.hero.headline }}</h1>
+    {% endif %}
+    {% if config.hero.subheadline %}
+    <p class="hero-subtitle text-script">{{ config.hero.subheadline }}</p>
+    {% endif %}
+    {% if config.hero.cta %}
+    <a href="{{ config.hero.cta.url }}" class="btn"{% if config.hero.cta.external %} target="_blank" rel="noopener"{% endif %}>{{ config.hero.cta.label }}</a>
+    {% endif %}
+  </div>
+
+  <!-- Video play/pause toggle -->
+  <button class="hero-video-toggle" id="hero-video-toggle" aria-label="Pause video">
+    <i class="icon icon-pause" aria-hidden="true"></i>
+  </button>
+
+</section>
+{% endif %}

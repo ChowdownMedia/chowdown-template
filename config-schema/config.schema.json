@@ -1,0 +1,460 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chowdown.media/config.schema.json",
+  "title": "Chowdown Client Config",
+  "description": "Complete configuration for a Chowdown website build. Every pipeline script reads from this file. Nothing is hardcoded in HTML.",
+  "type": "object",
+  "required": ["client", "brand", "contact", "hours", "nav", "social", "schema", "features"],
+  "additionalProperties": false,
+  "properties": {
+
+    "client": {
+      "type": "object",
+      "description": "Client identity and infrastructure references.",
+      "required": ["name", "slug", "template_type", "domain"],
+      "additionalProperties": false,
+      "properties": {
+        "name":               { "type": "string", "description": "Display name. Appears in schema, footer, meta tags." },
+        "slug":               { "type": "string", "pattern": "^[a-z0-9-]+$", "description": "URL-safe identifier. Used for repo name, Cloudflare project, output folder." },
+        "template_type":      { "type": "string", "enum": ["single-restaurant", "venue", "multi-location-brand", "multi-location-site"], "description": "Controls which template variant renders." },
+        "domain":             { "type": "string", "format": "uri", "description": "Production domain with protocol. Used in canonical URLs, schema, sitemap." },
+        "staging_url":        { "type": "string", "format": "uri", "description": "Cloudflare Pages staging URL.", "default": "" },
+        "ghl_location_id":    { "type": "string", "description": "GoHighLevel location ID. Empty until GHL is configured.", "default": "" },
+        "google_place_id":    { "type": "string", "description": "Google Places API ID for review feed.", "default": "" },
+        "ga4_measurement_id": { "type": "string", "description": "Google Analytics 4 measurement ID.", "default": "" },
+        "github_repo":        { "type": "string", "description": "GitHub repo path under ChowdownMedia org.", "default": "" },
+        "cloudflare_project": { "type": "string", "description": "Cloudflare Pages project name.", "default": "" }
+      }
+    },
+
+    "brand": {
+      "type": "object",
+      "description": "Visual identity. Drives CSS variables and asset references.",
+      "required": ["primary_color", "heading_font", "body_font", "logo"],
+      "additionalProperties": false,
+      "properties": {
+        "primary_color":    { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$", "description": "Primary brand color. Buttons, links, accents." },
+        "secondary_color":  { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$", "description": "Secondary brand color.", "default": "#ffffff" },
+        "accent_color":     { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$", "description": "Accent color for highlights.", "default": "#cccccc" },
+        "background_color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$", "description": "Page background color.", "default": "#f5f5f5" },
+        "text_color":       { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$", "description": "Default body text color.", "default": "#333333" },
+        "heading_font":     { "type": "string", "description": "Heading font family name. Must be self-hosted." },
+        "body_font":        { "type": "string", "description": "Body font family name. Must be self-hosted." },
+        "script_font":      { "type": "string", "description": "Decorative/script font. Optional.", "default": "" },
+        "logo":             { "type": "string", "description": "Path to logo WebP file relative to site root." },
+        "logo_width":       { "type": "integer", "minimum": 1, "description": "Logo display width in pixels. Must match actual file dimensions.", "default": 200 },
+        "logo_height":      { "type": "integer", "minimum": 1, "description": "Logo display height in pixels. Must match actual file dimensions.", "default": 140 },
+        "favicon_32":       { "type": "string", "description": "Path to 32x32 favicon.", "default": "/assets/images/home/favicon-32x32.webp" },
+        "favicon_180":      { "type": "string", "description": "Path to 180x180 Apple touch icon.", "default": "/assets/images/home/favicon-180x180.webp" },
+        "og_image":         { "type": "string", "description": "Path to 1200x630 Open Graph share image. Must be JPG for compatibility.", "default": "/assets/images/home/og-share.jpg" },
+        "logo_position":    { "type": "string", "enum": ["center-nav", "above"], "description": "Logo placement. center-nav = logo between nav-left and nav-right (venue pattern). above = logo centered above nav bar, nav spans full width below (single-restaurant pattern).", "default": "center-nav" }
+      }
+    },
+
+    "contact": {
+      "type": "object",
+      "description": "Business contact information. Used in schema, footer, map.",
+      "required": ["phone", "address", "city", "state", "zip", "geo"],
+      "additionalProperties": false,
+      "properties": {
+        "phone":         { "type": "string", "description": "Phone number in E.164 format for tel: links. Example: +17708249659" },
+        "phone_display": { "type": "string", "description": "Phone number formatted for display. Example: (770)-824-9659" },
+        "email":         { "type": "string", "format": "email", "description": "Primary contact email.", "default": "" },
+        "address":       { "type": "string", "description": "Street address." },
+        "city":          { "type": "string" },
+        "state":         { "type": "string", "minLength": 2, "maxLength": 2, "description": "Two-letter state code." },
+        "zip":           { "type": "string", "pattern": "^[0-9]{5}(-[0-9]{4})?$" },
+        "country":       { "type": "string", "default": "US" },
+        "geo": {
+          "type": "object",
+          "required": ["lat", "lng"],
+          "additionalProperties": false,
+          "properties": {
+            "lat": { "type": "number", "minimum": -90, "maximum": 90, "description": "Latitude. Verify this is the CLIENT's location, not another client." },
+            "lng": { "type": "number", "minimum": -180, "maximum": 180, "description": "Longitude. Verify this is the CLIENT's location, not another client." }
+          }
+        }
+      }
+    },
+
+    "hours": {
+      "type": "object",
+      "description": "Business hours. Drives footer display and openingHoursSpecification schema. Temporary until GHL Worker is live.",
+      "required": ["groups"],
+      "additionalProperties": false,
+      "properties": {
+        "note": { "type": "string", "description": "Human-readable note about hours status.", "default": "Hours are temporary until GHL Worker is live" },
+        "groups": {
+          "type": "array",
+          "minItems": 1,
+          "description": "One or more hour groups (e.g. Bar Hours, Restaurant Hours, Kitchen Hours).",
+          "items": {
+            "type": "object",
+            "required": ["label", "schedule"],
+            "additionalProperties": false,
+            "properties": {
+              "label": { "type": "string", "description": "Display label for this hour group." },
+              "schedule": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["days", "open", "close"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "days":  { "type": "string", "description": "Day range. Examples: 'Monday - Thursday', 'Friday', 'Saturday - Sunday'" },
+                    "open":  { "type": "string", "pattern": "^[0-9]{2}:[0-9]{2}$", "description": "Opening time in 24h format. Example: 11:00" },
+                    "close": { "type": "string", "pattern": "^[0-9]{2}:[0-9]{2}$", "description": "Closing time in 24h format. Example: 22:00" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "nav": {
+      "type": "object",
+      "description": "Navigation structure. Extracted verbatim from source site. Drives header, mobile menu, and breadcrumbs.",
+      "required": ["left", "right"],
+      "additionalProperties": false,
+      "properties": {
+        "left": {
+          "type": "array",
+          "description": "Left side nav items (before logo).",
+          "items": { "$ref": "#/$defs/navItem" }
+        },
+        "right": {
+          "type": "array",
+          "description": "Right side nav items (after logo).",
+          "items": { "$ref": "#/$defs/navItem" }
+        },
+        "about_dropdown": {
+          "type": "array",
+          "description": "Items in the About dropdown. Optional — only if source site has one.",
+          "items": { "$ref": "#/$defs/navItem" },
+          "default": []
+        },
+        "mobile_footer": {
+          "type": "array",
+          "description": "Mobile footer bar items (max 3).",
+          "items": { "$ref": "#/$defs/navItem" },
+          "maxItems": 3,
+          "default": []
+        },
+        "cta_buttons": {
+          "type": "array",
+          "description": "Styled CTA buttons rendered separately from nav links. Appear as .btn elements in the nav bar. Render as standard links in mobile menu.",
+          "items": { "$ref": "#/$defs/navItem" },
+          "default": []
+        }
+      }
+    },
+
+    "social": {
+      "type": "object",
+      "description": "Social media profile URLs. Only configured platforms render icons.",
+      "additionalProperties": false,
+      "properties": {
+        "facebook":    { "type": "string", "format": "uri", "default": "" },
+        "instagram":   { "type": "string", "format": "uri", "default": "" },
+        "tiktok":      { "type": "string", "format": "uri", "default": "" },
+        "twitter":     { "type": "string", "format": "uri", "default": "" },
+        "google":      { "type": "string", "format": "uri", "default": "" },
+        "yelp":        { "type": "string", "format": "uri", "default": "" },
+        "tripadvisor": { "type": "string", "format": "uri", "default": "" }
+      }
+    },
+
+    "schema": {
+      "type": "object",
+      "description": "Structured data configuration. Drives JSON-LD generation.",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type":           { "type": "string", "enum": ["Restaurant", "FoodEstablishment", "BarOrPub", "EntertainmentBusiness", "SportsActivityLocation"], "description": "Primary schema.org type for this business." },
+        "cuisine":        { "type": "array", "items": { "type": "string" }, "description": "Cuisine types for servesCuisine.", "default": [] },
+        "price_range":    { "type": "string", "enum": ["$", "$$", "$$$", "$$$$"], "default": "$$" },
+        "serves_alcohol": { "type": "boolean", "default": false },
+        "reservations":   { "type": "boolean", "description": "Accepts reservations.", "default": false },
+        "takeout":        { "type": "boolean", "default": true },
+        "delivery":       { "type": "boolean", "default": false }
+      }
+    },
+
+    "features": {
+      "type": "object",
+      "description": "Feature flags. Controls which template sections render. false = section skipped entirely.",
+      "additionalProperties": false,
+      "properties": {
+        "hero_type":         { "type": "string", "enum": ["image", "video", "none"], "description": "Hero section treatment.", "default": "image" },
+        "story":             { "type": "boolean", "description": "Story/about section.", "default": true },
+        "vendor_grid":       { "type": "boolean", "description": "Multi-concept vendor grid (venue template only).", "default": false },
+        "activity_grid":     { "type": "boolean", "description": "Activity/sports section (venue template only).", "default": false },
+        "events":            { "type": "boolean", "default": true },
+        "menu_cta":          { "type": "boolean", "default": true },
+        "drinks_cta":        { "type": "boolean", "default": false },
+        "specials":          { "type": "boolean", "default": false },
+        "gallery":           { "type": "boolean", "default": true },
+        "catering":          { "type": "boolean", "default": false },
+        "private_parties":   { "type": "boolean", "default": false },
+        "reservations":      { "type": "boolean", "default": false },
+        "gift_cards":        { "type": "boolean", "default": false },
+        "jobs":              { "type": "boolean", "default": false },
+        "birthday_capture":  { "type": "boolean", "default": false },
+        "newsletter":        { "type": "boolean", "default": true },
+        "reviews":           { "type": "boolean", "default": true },
+        "map":               { "type": "boolean", "default": true }
+      }
+    },
+
+    "hero": {
+      "type": "object",
+      "description": "Hero section content. Which hero type renders is controlled by features.hero_type.",
+      "additionalProperties": false,
+      "properties": {
+        "video_url":     { "type": "string", "description": "Path to self-hosted hero video (MP4). Used when hero_type=video.", "default": "" },
+        "poster_image":  { "type": "string", "description": "Path to video poster image or hero background. fetchpriority=high.", "default": "" },
+        "image_url":     { "type": "string", "description": "Path to hero image. Used when hero_type=image. This is the LCP element.", "default": "" },
+        "headline":      { "type": "string", "description": "Hero h1 text. Optional — omit for no headline overlay.", "default": "" },
+        "subheadline":   { "type": "string", "description": "Hero subtitle text. Optional.", "default": "" },
+        "cta": {
+          "type": "object",
+          "description": "Hero call-to-action button. Optional — omit for no CTA.",
+          "properties": {
+            "label":    { "type": "string" },
+            "url":      { "type": "string" },
+            "external": { "type": "boolean", "default": false }
+          }
+        }
+      }
+    },
+
+    "story": {
+      "type": "object",
+      "description": "Story/about section content. Two-column: text left, image right.",
+      "additionalProperties": false,
+      "properties": {
+        "heading":    { "type": "string", "default": "" },
+        "subheading": { "type": "string", "default": "" },
+        "body":       { "type": "array", "items": { "type": "string" }, "description": "Array of paragraphs.", "default": [] },
+        "image": {
+          "type": "object",
+          "properties": {
+            "src":    { "type": "string" },
+            "alt":    { "type": "string" },
+            "width":  { "type": "integer" },
+            "height": { "type": "integer" }
+          }
+        },
+        "cta": {
+          "type": "object",
+          "properties": {
+            "label":    { "type": "string" },
+            "url":      { "type": "string" },
+            "external": { "type": "boolean", "default": false }
+          }
+        }
+      }
+    },
+
+    "menu_cta": {
+      "type": "object",
+      "description": "Menu CTA section content. Heading, copy, primary + optional secondary button.",
+      "additionalProperties": false,
+      "properties": {
+        "heading":    { "type": "string", "default": "" },
+        "subheading": { "type": "string", "default": "" },
+        "body":       { "type": "array", "items": { "type": "string" }, "default": [] },
+        "primary": {
+          "type": "object",
+          "description": "Primary CTA button (e.g. View Food Menu).",
+          "properties": {
+            "label":    { "type": "string" },
+            "url":      { "type": "string" },
+            "external": { "type": "boolean", "default": false }
+          }
+        },
+        "secondary": {
+          "type": "object",
+          "description": "Secondary CTA button (e.g. View Drinks Menu). Optional.",
+          "properties": {
+            "label":    { "type": "string" },
+            "url":      { "type": "string" },
+            "external": { "type": "boolean", "default": false }
+          }
+        }
+      }
+    },
+
+    "gallery": {
+      "type": "array",
+      "description": "Gallery images. Each item has thumb (display size), full (lightbox size), alt, width, height.",
+      "items": {
+        "type": "object",
+        "required": ["thumb", "full", "alt"],
+        "properties": {
+          "thumb":  { "type": "string", "description": "Thumbnail path — sized to display dimensions." },
+          "full":   { "type": "string", "description": "Full-size path — for lightbox view." },
+          "alt":    { "type": "string" },
+          "width":  { "type": "integer", "description": "Thumbnail display width." },
+          "height": { "type": "integer", "description": "Thumbnail display height." }
+        }
+      },
+      "default": []
+    },
+
+    "gallery_heading": {
+      "type": "string",
+      "description": "Optional heading above gallery grid.",
+      "default": ""
+    },
+
+    "specials": {
+      "type": "array",
+      "description": "Specials slides. Each slide has image, headline, optional body, optional CTA.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "headline": { "type": "string", "default": "" },
+          "body":     { "type": "string", "default": "" },
+          "image": {
+            "type": "object",
+            "properties": {
+              "src":    { "type": "string" },
+              "alt":    { "type": "string" },
+              "width":  { "type": "integer" },
+              "height": { "type": "integer" }
+            }
+          },
+          "cta": {
+            "type": "object",
+            "properties": {
+              "label":    { "type": "string" },
+              "url":      { "type": "string" },
+              "external": { "type": "boolean", "default": false }
+            }
+          }
+        }
+      },
+      "default": []
+    },
+
+    "ordering": {
+      "type": "object",
+      "description": "Online ordering configuration.",
+      "additionalProperties": false,
+      "properties": {
+        "type": { "type": "string", "enum": ["single", "multi", "none"], "description": "single = one ordering URL, multi = dropdown with multiple vendors.", "default": "none" },
+        "url":  { "type": "string", "format": "uri", "description": "Primary ordering URL (for single type).", "default": "" },
+        "vendors": {
+          "type": "array",
+          "description": "Multiple ordering URLs (for multi type, venue template).",
+          "items": {
+            "type": "object",
+            "required": ["label", "url"],
+            "properties": {
+              "label": { "type": "string" },
+              "url":   { "type": "string", "format": "uri" }
+            }
+          },
+          "default": []
+        }
+      }
+    },
+
+    "ghl": {
+      "type": "object",
+      "description": "GoHighLevel integration IDs. All empty until GHL location is configured.",
+      "additionalProperties": false,
+      "properties": {
+        "newsletter_form_id": { "type": "string", "default": "" },
+        "contact_form_id":    { "type": "string", "default": "" },
+        "birthday_form_id":   { "type": "string", "default": "" },
+        "events_calendar_id": { "type": "string", "default": "" },
+        "note":               { "type": "string", "default": "Empty until GHL location is configured" }
+      }
+    },
+
+    "multi_location": {
+      "type": "object",
+      "description": "Multi-location configuration. Only populated for multi-location-brand and multi-location-site template types.",
+      "additionalProperties": false,
+      "properties": {
+        "is_location":      { "type": "boolean", "description": "true if this is an individual location site.", "default": false },
+        "brand_name":       { "type": "string", "default": "" },
+        "brand_url":        { "type": "string", "format": "uri", "default": "" },
+        "location_name":    { "type": "string", "default": "" },
+        "sibling_locations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "url"],
+            "properties": {
+              "name": { "type": "string" },
+              "url":  { "type": "string", "format": "uri" }
+            }
+          },
+          "default": []
+        }
+      }
+    },
+
+    "reviews": {
+      "type": "array",
+      "description": "Customer reviews for the review carousel. 3-5 reviews recommended. If empty or missing, reviews section does not render.",
+      "items": {
+        "type": "object",
+        "required": ["name", "source", "text"],
+        "additionalProperties": false,
+        "properties": {
+          "name":   { "type": "string", "description": "Reviewer display name." },
+          "source": { "type": "string", "enum": ["Google", "Yelp", "TripAdvisor", "Facebook"], "description": "Review platform. Drives icon selection." },
+          "text":   { "type": "string", "description": "Review body text." },
+          "rating": { "type": "integer", "minimum": 1, "maximum": 5, "description": "Star rating 1-5. Optional — if omitted, no stars shown.", "default": 5 }
+        }
+      },
+      "default": []
+    },
+
+    "vendors": {
+      "type": "array",
+      "description": "Vendor/restaurant list for venue template. Each vendor gets a subpage and appears in the vendor grid.",
+      "items": {
+        "type": "object",
+        "required": ["name", "slug", "type"],
+        "additionalProperties": false,
+        "properties": {
+          "name":    { "type": "string", "description": "Display name." },
+          "slug":    { "type": "string", "pattern": "^[a-z0-9-]+$", "description": "URL slug for subpage path." },
+          "type":    { "type": "string", "enum": ["Restaurant", "BarOrPub", "CafeOrCoffeeShop", "IceCreamShop"], "description": "Schema type for this vendor." },
+          "cuisine": { "type": "array", "items": { "type": "string" }, "default": [] },
+          "ordering_url": { "type": "string", "format": "uri", "default": "" },
+          "cover_image":  { "type": "string", "description": "Path to vendor cover image.", "default": "" }
+        }
+      },
+      "default": []
+    }
+
+  },
+
+  "$defs": {
+    "navItem": {
+      "type": "object",
+      "required": ["label", "url"],
+      "additionalProperties": false,
+      "properties": {
+        "label":    { "type": "string", "description": "Display text." },
+        "url":      { "type": "string", "description": "Link target. Absolute for external, relative for internal." },
+        "external": { "type": "boolean", "description": "Opens in new tab with rel=noopener.", "default": false },
+        "dropdown": {
+          "type": "array",
+          "description": "Dropdown items under this nav item.",
+          "items": { "$ref": "#/$defs/navItem" },
+          "default": []
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,223 @@
+{
+  "$comment": "Example config: Mezza Luna Marietta — single-restaurant template. Source: mezzalunamarietta.com/home-5361",
+
+  "client": {
+    "name": "Mezza Luna Pasta & Seafood Marietta",
+    "slug": "mezza-luna-marietta",
+    "template_type": "single-restaurant",
+    "domain": "https://www.mezzalunamarietta.com",
+    "staging_url": "https://mezza-luna-marietta.pages.dev",
+    "ghl_location_id": "xfiCeeXzsXHOVwOfWGzB",
+    "google_place_id": "",
+    "ga4_measurement_id": "",
+    "github_repo": "ChowdownMedia/mezza-luna-marietta",
+    "cloudflare_project": "mezza-luna-marietta"
+  },
+
+  "brand": {
+    "primary_color": "#8B1A1A",
+    "secondary_color": "#C9A96E",
+    "accent_color": "#D4AF37",
+    "background_color": "#1a1a1a",
+    "text_color": "#f5f5f5",
+    "heading_font": "Libre Baskerville",
+    "body_font": "Lato",
+    "script_font": "Alex Brush",
+    "logo": "/assets/images/home/logo.webp",
+    "logo_width": 200,
+    "logo_height": 140,
+    "favicon_32": "/assets/images/home/favicon-32x32.webp",
+    "favicon_180": "/assets/images/home/favicon-180x180.webp",
+    "og_image": "/assets/images/home/og-share.jpg",
+    "logo_position": "above"
+  },
+
+  "contact": {
+    "phone": "+16782145856",
+    "phone_display": "(678)-214-5856",
+    "email": "",
+    "address": "2100 Roswell Rd #2198",
+    "city": "Marietta",
+    "state": "GA",
+    "zip": "30062",
+    "country": "US",
+    "geo": {
+      "lat": 33.9527,
+      "lng": -84.4575
+    }
+  },
+
+  "hours": {
+    "note": "Hours are temporary until GHL Worker is live. Extracted from mezzalunamarietta.com 2026-04-02.",
+    "groups": [
+      {
+        "label": "Lunch",
+        "schedule": [
+          { "days": "Monday - Thursday", "open": "11:30", "close": "14:00" },
+          { "days": "Saturday", "open": "11:30", "close": "15:00" },
+          { "days": "Sunday", "open": "12:00", "close": "15:00" }
+        ]
+      },
+      {
+        "label": "Dinner",
+        "schedule": [
+          { "days": "Monday - Thursday", "open": "15:00", "close": "21:00" },
+          { "days": "Friday", "open": "15:00", "close": "21:00" },
+          { "days": "Saturday", "open": "15:00", "close": "22:00" },
+          { "days": "Sunday", "open": "15:00", "close": "21:00" }
+        ]
+      }
+    ]
+  },
+
+  "nav": {
+    "left": [
+      {
+        "label": "Menu",
+        "url": "#",
+        "external": false,
+        "dropdown": [
+          { "label": "Food Menu", "url": "https://assets.cdn.filesafe.space/xfiCeeXzsXHOVwOfWGzB/media/69ab7445b3fc00691b378858.pdf", "external": true },
+          { "label": "Drink & Dessert Menu", "url": "https://storage.googleapis.com/msgsndr/xfiCeeXzsXHOVwOfWGzB/media/687973b4817a8425450b505d.pdf", "external": true },
+          { "label": "To-Go Menu", "url": "https://assets.cdn.filesafe.space/xfiCeeXzsXHOVwOfWGzB/media/69ab74457bdf38a1e8b30b51.pdf", "external": true },
+          { "label": "Catering Menu", "url": "https://storage.googleapis.com/msgsndr/xfiCeeXzsXHOVwOfWGzB/media/67acb941feff7e8cb6edcc79.pdf", "external": true }
+        ]
+      },
+      {
+        "label": "Online Ordering",
+        "url": "#",
+        "external": false,
+        "dropdown": [
+          { "label": "ChowNow", "url": "https://direct.chownow.com/order/11197/locations/15454", "external": true },
+          { "label": "Slice", "url": "https://slicelife.com/restaurants/ga/marietta/30062/mezza-luna-pasta-seafood/menu", "external": true }
+        ]
+      },
+      { "label": "Gallery", "url": "/gallery/", "external": false },
+      { "label": "Social Club", "url": "/social-club/", "external": false }
+    ],
+    "right": [
+      { "label": "Catering", "url": "https://www.ezcater.com/catering/pvt/mezza-luna-pasta-and-seafood-marietta?fcv=1", "external": true },
+      { "label": "Careers", "url": "/careers/", "external": false },
+      {
+        "label": "Delivery",
+        "url": "#",
+        "external": false,
+        "dropdown": [
+          { "label": "DoorDash", "url": "https://www.doordash.com/store/mezza-luna-marietta-marietta-26064093/", "external": true },
+          { "label": "UberEats", "url": "https://www.ubereats.com/store/mezza-luna-pasta-and-seafood-marietta/vCItwDTGUMe5kfEZJJwskQ", "external": true },
+          { "label": "GrubHub", "url": "https://www.grubhub.com/restaurant/mezza-luna-pasta--seafood-marietta-2100-roswell-rd-2198-marietta/7534792", "external": true }
+        ]
+      },
+      { "label": "Reservations", "url": "/reservations/", "external": false }
+    ],
+    "about_dropdown": [],
+    "mobile_footer": [
+      { "label": "Order", "url": "https://direct.chownow.com/order/11197/locations/15454", "external": true },
+      { "label": "Reservations", "url": "/reservations/", "external": false },
+      { "label": "Catering", "url": "https://www.ezcater.com/catering/pvt/mezza-luna-pasta-and-seafood-marietta?fcv=1", "external": true }
+    ],
+    "cta_buttons": [
+      { "label": "Order Online", "url": "https://direct.chownow.com/order/11197/locations/15454", "external": true },
+      { "label": "Reservations", "url": "/reservations/", "external": false }
+    ]
+  },
+
+  "social": {
+    "facebook": "",
+    "instagram": "",
+    "tiktok": "",
+    "twitter": "",
+    "google": "",
+    "yelp": "",
+    "tripadvisor": ""
+  },
+
+  "schema": {
+    "type": "Restaurant",
+    "cuisine": ["Italian", "Seafood", "Pasta"],
+    "price_range": "$$",
+    "serves_alcohol": true,
+    "reservations": true,
+    "takeout": true,
+    "delivery": true
+  },
+
+  "features": {
+    "hero_type": "image",
+    "vendor_grid": false,
+    "activity_grid": false,
+    "events": true,
+    "menu_cta": true,
+    "drinks_cta": true,
+    "specials": true,
+    "gallery": true,
+    "catering": true,
+    "private_parties": false,
+    "reservations": true,
+    "gift_cards": false,
+    "jobs": true,
+    "birthday_capture": false,
+    "newsletter": true,
+    "reviews": true,
+    "map": true
+  },
+
+  "hero": {
+    "video_url": "",
+    "poster_image": "",
+    "image_url": "/assets/images/home/hero.webp",
+    "headline": "",
+    "subheadline": "",
+    "cta": {}
+  },
+
+  "ordering": {
+    "type": "multi",
+    "url": "",
+    "vendors": [
+      { "label": "ChowNow", "url": "https://direct.chownow.com/order/11197/locations/15454" },
+      { "label": "Slice", "url": "https://slicelife.com/restaurants/ga/marietta/30062/mezza-luna-pasta-seafood/menu" }
+    ]
+  },
+
+  "ghl": {
+    "newsletter_form_id": "",
+    "contact_form_id": "",
+    "birthday_form_id": "",
+    "events_calendar_id": "",
+    "note": "GHL sub-account ID: xfiCeeXzsXHOVwOfWGzB. Form IDs to be configured."
+  },
+
+  "multi_location": {
+    "is_location": true,
+    "brand_name": "Mezza Luna Furfaro Italian Restaurant",
+    "brand_url": "https://www.mezzalunafurfaro.com",
+    "location_name": "Marietta",
+    "sibling_locations": [
+      { "name": "Smyrna", "url": "https://www.smyrna.mezzalunaga.com" }
+    ]
+  },
+
+  "reviews": [
+    {
+      "name": "Sarah M.",
+      "source": "Google",
+      "text": "Absolutely wonderful Italian food. The pasta is fresh, the seafood is perfectly prepared, and the atmosphere is warm and inviting. Our server was attentive and knowledgeable about the menu. Will definitely be back!",
+      "rating": 5
+    },
+    {
+      "name": "James R.",
+      "source": "Google",
+      "text": "Best Italian restaurant in the Marietta area. The veal piccata was outstanding and the tiramisu was the perfect ending. Great wine selection too.",
+      "rating": 5
+    },
+    {
+      "name": "Linda K.",
+      "source": "Yelp",
+      "text": "We've been coming here for years and the quality never drops. The lunch specials are a great deal and the catering for our office event was flawless.",
+      "rating": 5
+    }
+  ],
+
+  "vendors": []
+}

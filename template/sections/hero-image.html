@@ -1,0 +1,39 @@
+<!-- ========== HERO IMAGE — Config-driven, rendered by scaffold.py ==========
+     Full-width image hero. Used when config.features.hero_type == "image".
+     Image source: config.hero.image_url — this IS the LCP element.
+     Overlay: semi-transparent dark overlay for text legibility
+     Headline/subheadline/CTA: optional slots, only render if configured
+
+     Performance:
+       - Image has fetchpriority="high" — it is the LCP element
+       - rel="preload" for this image added to <head> by scaffold.py
+       - No loading="lazy" — above the fold
+     ========================================================================== -->
+
+{% if config.features.hero_type == "image" %}
+<section class="hero">
+
+  <!-- Hero image — LCP element -->
+  <img src="{{ config.hero.image_url }}"
+       alt="{{ config.client.name }}"
+       class="hero-image"
+       fetchpriority="high">
+
+  <!-- Overlay -->
+  <div class="hero-overlay"></div>
+
+  <!-- Content -->
+  <div class="hero-content">
+    {% if config.hero.headline %}
+    <h1 class="hero-title">{{ config.hero.headline }}</h1>
+    {% endif %}
+    {% if config.hero.subheadline %}
+    <p class="hero-subtitle text-script">{{ config.hero.subheadline }}</p>
+    {% endif %}
+    {% if config.hero.cta %}
+    <a href="{{ config.hero.cta.url }}" class="btn"{% if config.hero.cta.external %} target="_blank" rel="noopener"{% endif %}>{{ config.hero.cta.label }}</a>
+    {% endif %}
+  </div>
+
+</section>
+{% endif %}

@@ -1,0 +1,45 @@
+<!-- ========== STORY SECTION — Config-driven, rendered by scaffold.py ==========
+     Two-column layout: text left, image right.
+     All content from config.story slots.
+     Image is below-fold — loading="lazy".
+     Conditional on config.features.story.
+     ========================================================================== -->
+
+{% if config.features.story %}
+<section class="section-story">
+  <div class="container">
+    <div class="story-grid">
+
+      <!-- Text column -->
+      <div class="story-text">
+        {% if config.story.heading %}
+        <h2 class="story-heading">{{ config.story.heading }}</h2>
+        {% endif %}
+        {% if config.story.subheading %}
+        <p class="story-subheading text-script">{{ config.story.subheading }}</p>
+        {% endif %}
+        {% if config.story.body %}
+        {% for paragraph in config.story.body %}
+        <p>{{ paragraph }}</p>
+        {% endfor %}
+        {% endif %}
+        {% if config.story.cta %}
+        <a href="{{ config.story.cta.url }}" class="btn"{% if config.story.cta.external %} target="_blank" rel="noopener"{% endif %}>{{ config.story.cta.label }}</a>
+        {% endif %}
+      </div>
+
+      <!-- Image column -->
+      {% if config.story.image %}
+      <div class="story-image">
+        <img src="{{ config.story.image.src }}"
+             alt="{{ config.story.image.alt }}"
+             width="{{ config.story.image.width }}"
+             height="{{ config.story.image.height }}"
+             loading="lazy">
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</section>
+{% endif %}

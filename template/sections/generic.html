@@ -1,0 +1,53 @@
+<!-- ========== GENERIC SECTION — Fallback for unclassified content ==========
+     Used by renderer.py when a content-brief section doesn't match any typed
+     section template. Flexible layout: heading, subheading, body copy,
+     optional image, optional CTA.
+
+     renderer.py passes content via section_data object:
+       section_data.heading     — optional
+       section_data.subheading  — optional
+       section_data.body        — array of paragraphs, optional
+       section_data.image       — {src, alt, width, height}, optional
+       section_data.cta         — {label, url, external}, optional
+       section_data.css_class   — additional class for styling hooks, optional
+     ========================================================================== -->
+
+<section class="section-generic{% if section_data.css_class %} {{ section_data.css_class }}{% endif %}">
+  <div class="container">
+    <div class="generic-inner">
+
+      {% if section_data.heading %}
+      <h2>{{ section_data.heading }}</h2>
+      {% endif %}
+
+      {% if section_data.subheading %}
+      <p class="text-script">{{ section_data.subheading }}</p>
+      {% endif %}
+
+      {% if section_data.image %}
+      <div class="generic-image">
+        <img src="{{ section_data.image.src }}"
+             alt="{{ section_data.image.alt }}"
+             width="{{ section_data.image.width }}"
+             height="{{ section_data.image.height }}"
+             loading="lazy">
+      </div>
+      {% endif %}
+
+      {% if section_data.body %}
+      <div class="generic-body">
+        {% for paragraph in section_data.body %}
+        <p>{{ paragraph }}</p>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if section_data.cta %}
+      <p class="generic-cta">
+        <a href="{{ section_data.cta.url }}" class="btn"{% if section_data.cta.external %} target="_blank" rel="noopener"{% endif %}>{{ section_data.cta.label }}</a>
+      </p>
+      {% endif %}
+
+    </div>
+  </div>
+</section>

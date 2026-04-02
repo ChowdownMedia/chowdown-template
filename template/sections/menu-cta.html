@@ -1,0 +1,36 @@
+<!-- ========== MENU CTA SECTION — Config-driven, rendered by scaffold.py ==========
+     Heading, subheading, body copy, primary CTA to menu.
+     Optional secondary CTA for drinks/dessert menu.
+     Conditional on config.features.menu_cta.
+     ========================================================================== -->
+
+{% if config.features.menu_cta %}
+<section class="section-menu-cta">
+  <div class="container">
+    <div class="menu-cta-inner">
+
+      {% if config.menu_cta.heading %}
+      <h2 class="menu-cta-heading">{{ config.menu_cta.heading }}</h2>
+      {% endif %}
+      {% if config.menu_cta.subheading %}
+      <p class="menu-cta-subheading text-script">{{ config.menu_cta.subheading }}</p>
+      {% endif %}
+      {% if config.menu_cta.body %}
+      {% for paragraph in config.menu_cta.body %}
+      <p>{{ paragraph }}</p>
+      {% endfor %}
+      {% endif %}
+
+      <div class="menu-cta-buttons">
+        {% if config.menu_cta.primary %}
+        <a href="{{ config.menu_cta.primary.url }}" class="btn"{% if config.menu_cta.primary.external %} target="_blank" rel="noopener"{% endif %}>{{ config.menu_cta.primary.label }}</a>
+        {% endif %}
+        {% if config.menu_cta.secondary %}
+        <a href="{{ config.menu_cta.secondary.url }}" class="btn btn-outline"{% if config.menu_cta.secondary.external %} target="_blank" rel="noopener"{% endif %}>{{ config.menu_cta.secondary.label }}</a>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endif %}

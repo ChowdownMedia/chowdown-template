@@ -1,0 +1,229 @@
+<!-- ========== REVIEWS CAROUSEL — Two modes, config-driven ==========
+     Mode 1 (static):  config.reviews array populated, no google_place_id.
+       → scaffold.py renders review cards directly into HTML at build time.
+
+     Mode 2 (dynamic): config.client.google_place_id is set.
+       → scaffold.py renders empty shell with data-slot attributes.
+       → Client-side JS fetches from Cloudflare Worker, injects reviews.
+       → Fallback: if API fails, falls back to config.reviews static cards.
+       → If both empty, section hidden via JS (display:none on container).
+
+     If config.reviews is empty AND google_place_id is empty,
+     this entire block is omitted — no broken markup.
+
+     Carousel controls: icon-angle-left, icon-angle-right
+     Auto-play toggle: icon-pause / icon-play (toggled by main.js)
+     ========================================================================== -->
+
+{% if config.client.google_place_id or config.reviews %}
+<section class="section-reviews" id="section-reviews">
+  <div class="reviews-overlay"></div>
+  <div class="container reviews-inner">
+    <h2 class="reviews-title">What Our Customers Are Saying</h2>
+
+    <div class="reviews-carousel" id="reviews-carousel"
+         {% if config.client.google_place_id %}
+         data-place-id="{{ config.client.google_place_id }}"
+         {% endif %}>
+
+      {% if config.client.google_place_id %}
+      <!-- ===== Dynamic mode: empty shells populated by JS ===== -->
+      <!-- Static fallback cards rendered hidden — shown if API fails -->
+      {% for review in config.reviews %}
+      <div class="review-slide review-static" style="display:none;"{% if loop.first %} data-fallback-first="true"{% endif %}>
+        <h3 class="reviews-source">
+          Review by &ndash;
+          {% if review.source == "Google" %}
+          <i class="icon icon-google" aria-hidden="true"></i>
+          {% endif %}
+          {% if review.source == "Yelp" %}
+          <i class="icon icon-yelp" aria-hidden="true"></i>
+          {% endif %}
+          {% if review.source == "TripAdvisor" %}
+          <i class="icon icon-tripadvisor" aria-hidden="true"></i>
+          {% endif %}
+          {% if review.source == "Facebook" %}
+          <i class="icon icon-facebook" aria-hidden="true"></i>
+          {% endif %}
+          {{ review.source }}
+        </h3>
+        <p class="review-author">
+          {{ review.name }}:
+          {% if review.rating %}
+          <span class="stars">
+            {% for i in range(review.rating) %}
+            <i class="icon icon-star" aria-hidden="true"></i>
+            {% endfor %}
+          </span>
+          {% endif %}
+        </p>
+        <div class="review-body">
+          <span class="quote-mark"><i class="icon icon-quote-left" aria-hidden="true"></i></span>
+          <p>{{ review.text }}</p>
+          <span class="quote-mark"><i class="icon icon-quote-right" aria-hidden="true"></i></span>
+        </div>
+      </div>
+      {% endfor %}
+
+      {% else %}
+      <!-- ===== Static mode: reviews rendered at build time ===== -->
+      {% for review in config.reviews %}
+      <div class="review-slide{% if loop.first %} active{% endif %}">
+        <h3 class="reviews-source">
+          Review by &ndash;
+          {% if review.source == "Google" %}
+          <i class="icon icon-google" aria-hidden="true"></i>
+          {% endif %}
+          {% if review.source == "Yelp" %}
+          <i class="icon icon-yelp" aria-hidden="true"></i>
+          {% endif %}
+          {% if review.source == "TripAdvisor" %}
+          <i class="icon icon-tripadvisor" aria-hidden="true"></i>
+          {% endif %}
+          {% if review.source == "Facebook" %}
+          <i class="icon icon-facebook" aria-hidden="true"></i>
+          {% endif %}
+          {{ review.source }}
+        </h3>
+        <p class="review-author">
+          {{ review.name }}:
+          {% if review.rating %}
+          <span class="stars">
+            {% for i in range(review.rating) %}
+            <i class="icon icon-star" aria-hidden="true"></i>
+            {% endfor %}
+          </span>
+          {% endif %}
+        </p>
+        <div class="review-body">
+          <span class="quote-mark"><i class="icon icon-quote-left" aria-hidden="true"></i></span>
+          <p>{{ review.text }}</p>
+          <span class="quote-mark"><i class="icon icon-quote-right" aria-hidden="true"></i></span>
+        </div>
+      </div>
+      {% endfor %}
+      {% endif %}
+
+    </div>
+
+    <!-- Carousel controls -->
+    <button class="review-arrow review-prev" id="review-prev" aria-label="Previous review">
+      <i class="icon icon-angle-left" aria-hidden="true"></i>
+    </button>
+    <button class="review-arrow review-next" id="review-next" aria-label="Next review">
+      <i class="icon icon-angle-right" aria-hidden="true"></i>
+    </button>
+
+    <!-- Dot indicators — built by JS in dynamic mode, rendered at build time in static mode -->
+    <div class="review-dots" id="review-dots">
+      {% if not config.client.google_place_id %}
+      {% for review in config.reviews %}
+      <button class="dot{% if loop.first %} active{% endif %}" data-index="{{ loop.index0 }}" aria-label="Review {{ loop.index }}"></button>
+      {% endfor %}
+      {% endif %}
+    </div>
+
+    <!-- Auto-play toggle -->
+    <button class="review-pause-btn" id="review-pause" aria-label="Pause reviews">
+      <i class="icon icon-pause" aria-hidden="true"></i>
+    </button>
+
+  </div>
+</section>
+
+{% if config.client.google_place_id %}
+<!-- Reviews fetch script — only included when dynamic mode is active -->
+<script>
+(function(){
+  var carousel = document.getElementById('reviews-carousel');
+  if (!carousel) return;
+  var WORKER_URL = 'https://reviews.chowdown.workers.dev/api/reviews';
+  var placeId = carousel.dataset.placeId;
+  if (!placeId) return;
+
+  fetch(WORKER_URL + '?placeId=' + encodeURIComponent(placeId))
+    .then(function(r) { return r.ok ? r.json() : Promise.reject(); })
+    .then(function(data) {
+      var reviews = (data.reviews || []).filter(function(r) { return r.rating >= 4; }).slice(0, 5);
+      if (!reviews.length) throw new Error('empty');
+      injectReviews(reviews);
+    })
+    .catch(function() {
+      activateFallback();
+    });
+
+  function injectReviews(reviews) {
+    // Remove static fallback cards
+    var statics = carousel.querySelectorAll('.review-static');
+    for (var i = 0; i < statics.length; i++) statics[i].remove();
+
+    // Build and insert dynamic cards
+    reviews.forEach(function(r, idx) {
+      var slide = document.createElement('div');
+      slide.className = 'review-slide' + (idx === 0 ? ' active' : '');
+
+      var stars = '';
+      for (var s = 0; s < r.rating; s++) stars += '<i class="icon icon-star" aria-hidden="true"></i>';
+
+      slide.innerHTML =
+        '<h3 class="reviews-source">Review by &ndash; <i class="icon icon-google" aria-hidden="true"></i> Google</h3>' +
+        '<p class="review-author">' + escHtml(r.author) + ': <span class="stars">' + stars + '</span></p>' +
+        '<div class="review-body">' +
+          '<span class="quote-mark"><i class="icon icon-quote-left" aria-hidden="true"></i></span>' +
+          '<p>' + escHtml(r.text) + '</p>' +
+          '<span class="quote-mark"><i class="icon icon-quote-right" aria-hidden="true"></i></span>' +
+        '</div>';
+      carousel.appendChild(slide);
+    });
+
+    // Build dot indicators
+    var dotsContainer = document.getElementById('review-dots');
+    dotsContainer.innerHTML = '';
+    reviews.forEach(function(r, idx) {
+      var dot = document.createElement('button');
+      dot.className = 'dot' + (idx === 0 ? ' active' : '');
+      dot.dataset.index = idx;
+      dot.setAttribute('aria-label', 'Review ' + (idx + 1));
+      dotsContainer.appendChild(dot);
+    });
+
+    // Re-initialize carousel (main.js exposes this)
+    if (window.initReviewCarousel) window.initReviewCarousel();
+  }
+
+  function activateFallback() {
+    var statics = carousel.querySelectorAll('.review-static');
+    if (!statics.length) {
+      // No static fallbacks either — hide entire section
+      var section = document.getElementById('section-reviews');
+      if (section) section.style.display = 'none';
+      return;
+    }
+    // Show static cards, set first as active
+    for (var i = 0; i < statics.length; i++) {
+      statics[i].style.display = '';
+      statics[i].classList.toggle('active', i === 0);
+    }
+    // Build dots for fallback cards
+    var dotsContainer = document.getElementById('review-dots');
+    dotsContainer.innerHTML = '';
+    for (var j = 0; j < statics.length; j++) {
+      var dot = document.createElement('button');
+      dot.className = 'dot' + (j === 0 ? ' active' : '');
+      dot.dataset.index = j;
+      dot.setAttribute('aria-label', 'Review ' + (j + 1));
+      dotsContainer.appendChild(dot);
+    }
+    if (window.initReviewCarousel) window.initReviewCarousel();
+  }
+
+  function escHtml(str) {
+    var d = document.createElement('div');
+    d.appendChild(document.createTextNode(str));
+    return d.innerHTML;
+  }
+})();
+</script>
+{% endif %}
+
+{% endif %}

@@ -1,0 +1,66 @@
+<!-- ========== NEWSLETTER + MAP — Config-driven, rendered by scaffold.py ==========
+     Newsletter: conditional on config.features.newsletter.
+       If GHL form ID configured → form action posts to GHL via Worker.
+       If GHL not yet configured → placeholder message, form still captures locally.
+     Map: click-to-load pattern — zero Google Maps JS on page load.
+       Address from config.contact. Placeholder text color #555 minimum (WCAG AA).
+       Geo coordinates from config.contact.geo for embed URL.
+     ========================================================================== -->
+
+{% if config.features.newsletter or config.features.map %}
+<section class="section-newsletter-map">
+  <div class="newsletter-map-grid">
+
+    {% if config.features.newsletter %}
+    <!-- Newsletter signup -->
+    <div class="contact-newsletter">
+      <h2 class="newsletter-heading">Newsletter</h2>
+
+      {% if config.ghl.newsletter_form_id %}
+      <!-- GHL form configured — posts to Worker -->
+      <form class="newsletter-form" action="/api/newsletter" method="post" data-ghl-form="{{ config.ghl.newsletter_form_id }}">
+        <p class="nl-subtitle">Sign up for our newsletter &amp; get exclusive offers and invites!</p>
+        <label for="nl-email">Email (required)</label>
+        <div class="newsletter-row">
+          <div class="nl-input-wrap">
+            <input type="email" id="nl-email" name="email" placeholder="e.g. email@example.com" required autocomplete="email">
+            <div class="nl-bar"></div>
+          </div>
+          <button type="submit" class="btn">Submit</button>
+        </div>
+      </form>
+      {% else %}
+      <!-- GHL not yet configured — form captures locally, scaffold.py wires when ready -->
+      <form class="newsletter-form" action="#" method="post">
+        <p class="nl-subtitle">Sign up for our newsletter &amp; get exclusive offers and invites!</p>
+        <!-- GHL integration pending — form submissions stored locally until wired -->
+        <label for="nl-email">Email (required)</label>
+        <div class="newsletter-row">
+          <div class="nl-input-wrap">
+            <input type="email" id="nl-email" name="email" placeholder="e.g. email@example.com" required autocomplete="email">
+            <div class="nl-bar"></div>
+          </div>
+          <button type="submit" class="btn">Submit</button>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if config.features.map %}
+    <!-- Click-to-load map — zero Google Maps JS on page load -->
+    <div class="contact-map" id="map">
+      <div id="map-container"
+           style="width:100%;height:100%;min-height:450px;background:#e8e8e8;cursor:pointer;"
+           onclick="this.innerHTML='<iframe title=&quot;{{ config.client.name }} location map&quot; src=&quot;https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&amp;q={{ config.contact.address_encoded }}+{{ config.contact.city }}+{{ config.contact.state }}+{{ config.contact.zip }}&quot; width=&quot;100%&quot; height=&quot;100%&quot; style=&quot;border:0;min-height:450px;&quot; allowfullscreen=&quot;&quot; loading=&quot;lazy&quot; referrerpolicy=&quot;no-referrer-when-downgrade&quot;></iframe>'">
+        <div style="display:flex;align-items:center;justify-content:center;height:100%;min-height:450px;flex-direction:column;gap:8px;">
+          <span style="font-family:var(--font-heading);font-size:1rem;color:#555;"><i class="icon icon-map-marker" aria-hidden="true"></i> {{ config.contact.address }}, {{ config.contact.city }}, {{ config.contact.state }} {{ config.contact.zip }}</span>
+          <span style="font-size:0.875rem;color:#555;">Click to load map</span>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+{% endif %}

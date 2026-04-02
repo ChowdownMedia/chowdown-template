@@ -1,0 +1,544 @@
+/* ==========================================================================
+   Chowdown Sections CSS
+   Styles for all section types: hero, story, menu-cta, gallery, specials, generic.
+   All values reference CSS variables from base.css.
+   No hardcoded colors or font names.
+   Lazy images use aspect-ratio to prevent CLS.
+   ========================================================================== */
+
+
+/* --------------------------------------------------------------------------
+   1. HERO (shared between video and image variants)
+   -------------------------------------------------------------------------- */
+
+.hero {
+  position: relative;
+  width: 100%;
+  height: 85vh;
+  min-height: 500px;
+  overflow: hidden;
+}
+
+.hero-video,
+.hero-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Poster image — sits above video until it loads */
+.hero-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  transition: opacity var(--transition-slow);
+}
+
+.hero.video-playing .hero-poster {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--color-overlay);
+  z-index: 2;
+}
+
+.hero-content {
+  position: absolute;
+  bottom: 15%;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  z-index: 3;
+  padding: 0 var(--space-4);
+}
+
+.hero-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-hero);
+  text-transform: uppercase;
+  color: #fff;
+  font-weight: 700;
+  margin-bottom: var(--space-4);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.hero-subtitle {
+  font-family: var(--font-script);
+  font-size: var(--text-2xl);
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 400;
+  margin-bottom: var(--space-6);
+}
+
+.hero-content .btn {
+  margin-top: var(--space-4);
+}
+
+/* Video play/pause toggle */
+.hero-video-toggle {
+  position: absolute;
+  bottom: var(--space-4);
+  left: var(--space-4);
+  z-index: 3;
+  background: rgba(0, 0, 0, 0.35);
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  width: var(--touch-min);
+  height: var(--touch-min);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.25rem;
+  transition: background var(--transition-fast);
+}
+
+.hero-video-toggle:hover {
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+}
+
+
+/* --------------------------------------------------------------------------
+   2. STORY (two-column: text + image)
+   -------------------------------------------------------------------------- */
+
+.section-story {
+  padding: var(--space-section) 0;
+  background-color: var(--color-bg);
+}
+
+.story-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-10);
+  align-items: center;
+}
+
+.story-heading {
+  font-family: var(--font-heading);
+  font-size: var(--text-3xl);
+  text-transform: uppercase;
+  color: var(--color-text);
+  font-weight: 700;
+  margin-bottom: var(--space-4);
+}
+
+.story-subheading {
+  font-family: var(--font-script);
+  font-size: var(--text-lg);
+  color: var(--color-text);
+  margin-bottom: var(--space-4);
+}
+
+.story-text p {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  line-height: 1.6;
+  font-weight: 300;
+  margin-bottom: var(--space-3);
+}
+
+.story-text .btn {
+  margin-top: var(--space-4);
+}
+
+.story-image img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-sm);
+}
+
+
+/* --------------------------------------------------------------------------
+   3. MENU CTA
+   -------------------------------------------------------------------------- */
+
+.section-menu-cta {
+  padding: var(--space-section) 0;
+  background-color: var(--color-bg-alt);
+  text-align: center;
+}
+
+.menu-cta-inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
+}
+
+.menu-cta-heading {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  text-transform: uppercase;
+  color: var(--color-text);
+  margin-bottom: var(--space-3);
+}
+
+.menu-cta-subheading {
+  font-family: var(--font-script);
+  font-size: var(--text-lg);
+  color: var(--color-text);
+  margin-bottom: var(--space-4);
+}
+
+.menu-cta-inner p {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  line-height: 1.6;
+  font-weight: 300;
+  margin-bottom: var(--space-3);
+}
+
+.menu-cta-buttons {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: var(--space-6);
+}
+
+
+/* --------------------------------------------------------------------------
+   4. GALLERY
+   -------------------------------------------------------------------------- */
+
+.section-gallery {
+  padding: var(--space-section) 0;
+  background-color: var(--color-bg);
+}
+
+.gallery-heading {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  text-transform: uppercase;
+  color: var(--color-text);
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+.gallery-item {
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  position: relative;
+}
+
+.gallery-item img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  aspect-ratio: 4 / 3;
+  transition: transform var(--transition-base);
+}
+
+.gallery-item:hover img {
+  transform: scale(1.05);
+}
+
+/* Lightbox overlay — handled by main.js */
+.gallery-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: var(--z-modal);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.gallery-lightbox.open {
+  display: flex;
+}
+
+.gallery-lightbox img {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+}
+
+.gallery-lightbox-close {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 2rem;
+  cursor: pointer;
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
+}
+
+
+/* --------------------------------------------------------------------------
+   5. SPECIALS CAROUSEL
+   -------------------------------------------------------------------------- */
+
+.section-specials {
+  padding: var(--space-section) 0;
+  background-color: var(--color-bg-alt);
+  position: relative;
+}
+
+.specials-heading {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  text-transform: uppercase;
+  color: var(--color-text);
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+.specials-carousel {
+  position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.specials-slide {
+  display: none;
+  text-align: center;
+}
+
+.specials-slide.active {
+  display: block;
+}
+
+.specials-slide img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+}
+
+.specials-content h3 {
+  font-family: var(--font-heading);
+  font-size: var(--text-xl);
+  text-transform: uppercase;
+  color: var(--color-text);
+  margin-bottom: var(--space-3);
+}
+
+.specials-content p {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  font-weight: 300;
+  line-height: 1.6;
+  margin-bottom: var(--space-4);
+}
+
+/* Carousel controls — same pattern as reviews */
+.specials-arrow {
+  position: absolute;
+  top: 40%;
+  transform: translateY(-50%);
+  background: var(--color-overlay-light);
+  border: none;
+  color: #fff;
+  width: var(--touch-min);
+  height: var(--touch-min);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.25rem;
+  transition: background var(--transition-fast);
+}
+
+.specials-arrow:hover {
+  background: var(--color-overlay);
+}
+
+.specials-prev { left: calc(-1 * var(--space-16)); }
+.specials-next { right: calc(-1 * var(--space-16)); }
+
+.specials-dots {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+/* Dots reuse .dot class from components.css but with dark variant */
+.section-specials .dot {
+  border-color: var(--color-text-muted);
+}
+
+.section-specials .dot.active {
+  background-color: var(--color-text);
+  border-color: var(--color-text);
+}
+
+.specials-pause-btn {
+  position: absolute;
+  bottom: var(--space-4);
+  left: 0;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 1.25rem;
+  padding: var(--space-2);
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.specials-pause-btn:hover {
+  color: var(--color-text);
+}
+
+
+/* --------------------------------------------------------------------------
+   6. GENERIC SECTION (fallback)
+   -------------------------------------------------------------------------- */
+
+.section-generic {
+  padding: var(--space-section) 0;
+  background-color: var(--color-bg);
+}
+
+.generic-inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.generic-inner h2 {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  text-transform: uppercase;
+  color: var(--color-text);
+  margin-bottom: var(--space-3);
+}
+
+.generic-inner .text-script {
+  font-size: var(--text-lg);
+  color: var(--color-text);
+  margin-bottom: var(--space-4);
+}
+
+.generic-image {
+  margin: var(--space-6) 0;
+}
+
+.generic-image img {
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  margin: 0 auto;
+  border-radius: var(--radius-sm);
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.generic-body p {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  line-height: 1.6;
+  font-weight: 300;
+  margin-bottom: var(--space-3);
+}
+
+.generic-cta {
+  margin-top: var(--space-6);
+}
+
+
+/* --------------------------------------------------------------------------
+   7. RESPONSIVE — 768px (Tablet)
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .hero {
+    height: 60vh;
+    min-height: 400px;
+  }
+
+  .hero-content {
+    bottom: 10%;
+  }
+
+  .story-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .story-image {
+    order: -1;
+  }
+
+  .gallery-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--space-3);
+  }
+
+  .specials-prev { left: 0; }
+  .specials-next { right: 0; }
+}
+
+
+/* --------------------------------------------------------------------------
+   8. RESPONSIVE — 480px (Mobile)
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 480px) {
+  .hero {
+    height: 50vh;
+    min-height: 300px;
+  }
+
+  .hero-title {
+    font-size: var(--text-3xl);
+  }
+
+  .hero-subtitle {
+    font-size: var(--text-lg);
+  }
+
+  .gallery-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+  }
+
+  .menu-cta-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .menu-cta-buttons .btn {
+    width: 100%;
+  }
+
+  .specials-arrow {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+}

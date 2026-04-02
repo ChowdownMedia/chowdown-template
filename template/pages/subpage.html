@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- SEO — populated by seo.py -->
+  <!-- SLOT: title -->
+  <title>{{ seo.title }}</title>
+  <!-- SLOT: meta_description -->
+  <meta name="description" content="{{ seo.description }}">
+  <!-- SLOT: canonical -->
+  <link rel="canonical" href="{{ config.client.domain }}{{ page.path }}">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="{{ seo.og_title }}">
+  <meta property="og:description" content="{{ seo.og_description }}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ config.client.domain }}{{ page.path }}">
+  <meta property="og:image" content="{{ config.client.domain }}{{ config.brand.og_image }}">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ seo.twitter_title }}">
+  <meta name="twitter:description" content="{{ seo.twitter_description }}">
+  <meta name="twitter:image" content="{{ config.client.domain }}{{ config.brand.og_image }}">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ config.brand.favicon_32 }}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ config.brand.favicon_180 }}">
+
+  <!-- Font face declarations -->
+  <style>
+  {{ font_face_css }}
+  </style>
+
+  <!-- Font preloads -->
+  {{ font_preload_tags }}
+
+  <!-- Icons inlined -->
+  <style>
+  {{ icons_css }}
+  </style>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/sections.css">
+
+  <!-- Structured Data — BreadcrumbList + page-specific schema from schema.py -->
+  <!-- SLOT: schema_json_ld -->
+  {{ schema_blocks }}
+
+</head>
+<body>
+
+  <!-- SLOT: header -->
+  {% include "components/header.html" %}
+
+  <!-- Page hero -->
+  {% if page.hero_image %}
+  <section class="page-hero" style="background-image: url('{{ page.hero_image }}');">
+    <div class="page-hero-overlay"></div>
+    <div class="page-hero-inner">
+      <h1 class="page-hero-title">{{ page.title }}</h1>
+    </div>
+  </section>
+  {% else %}
+  <section class="page-hero page-hero-flat">
+    <h1 class="page-hero-title">{{ page.title }}</h1>
+  </section>
+  {% endif %}
+
+  <!-- Breadcrumbs -->
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <div class="container">
+      <a href="/">Home</a>
+      {% for crumb in page.breadcrumbs %}
+      <span class="sep">/</span>
+      {% if crumb.url %}
+      <a href="{{ crumb.url }}">{{ crumb.label }}</a>
+      {% else %}
+      <span>{{ crumb.label }}</span>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- Page content — rendered by renderer.py from content-brief -->
+    <!-- SLOT: page_content -->
+    <section class="page-content">
+      <div class="page-content-inner">
+        {% for section in page_sections %}
+        {{ section.rendered_html }}
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Footer (includes contact section, footer bar, widgets, mobile footer) -->
+    {% include "components/footer.html" %}
+
+  </main>
+
+  <script src="/assets/js/main.js" defer></script>
+</body>
+</html>

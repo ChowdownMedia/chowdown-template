@@ -1,0 +1,30 @@
+<!-- ========== GALLERY SECTION — Config-driven, rendered by scaffold.py ==========
+     Image grid from config.gallery array.
+     Each image: loading="lazy", sized to display dimensions, lightbox-ready.
+     Lightbox behavior handled by main.js via data-lightbox attributes.
+     Conditional on config.features.gallery.
+     ========================================================================== -->
+
+{% if config.features.gallery and config.gallery %}
+<section class="section-gallery">
+  <div class="container">
+
+    {% if config.gallery_heading %}
+    <h2 class="gallery-heading">{{ config.gallery_heading }}</h2>
+    {% endif %}
+
+    <div class="gallery-grid">
+      {% for image in config.gallery %}
+      <a href="{{ image.full }}" class="gallery-item" data-lightbox="gallery" data-alt="{{ image.alt }}">
+        <img src="{{ image.thumb }}"
+             alt="{{ image.alt }}"
+             width="{{ image.width }}"
+             height="{{ image.height }}"
+             loading="lazy">
+      </a>
+      {% endfor %}
+    </div>
+
+  </div>
+</section>
+{% endif %}
