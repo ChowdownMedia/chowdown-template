@@ -73,10 +73,14 @@ def scaffold(config_path, pages_path):
         'REVIEWS_WORKER_URL': REVIEWS_WORKER_URL,
     }
 
-    # 8. Create page folders with shells
+    # 8. Create page folders (renderer.py writes the HTML via Jinja2)
     approved_pages = get_approved_pages(page_tree)
     for page in approved_pages:
-        create_page_shell(output_dir, page, config, context)
+        page_path = page.get('path', '/')
+        if page_path != '/':
+            folder = output_dir / page_path.strip('/')
+            os.makedirs(folder, exist_ok=True)
+            print(f'  folder: {page_path}')
 
     # 9. Write infrastructure files
     write_redirects(output_dir, page_tree)
